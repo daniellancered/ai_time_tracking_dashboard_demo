@@ -1,0 +1,17 @@
+export const ALL_CATEGORIES = [
+  'Client-facing meetings and comms',
+  'Strategic meetings / QBRs',
+  'Contract / commercial work',
+  'Onboarding and training',
+  'Analysis and insights',
+  'Campaign support (beyond scope)',
+  'Internal client work',
+  'Partner meetings',
+  'Travel & socials',
+  'Troubleshooting (feeds)',
+  'Troubleshooting (Smartly)',
+  'Learning',
+  'Team/company calls',
+  'Other internal tasks',
+  'PTO',
+] as const;
