@@ -31,12 +31,10 @@ export async function callAIProxy<
     );
   }
 
-  const data = await response.json() as AIProxyResponsePayload<TOutput>;
+  const data = (await response.json()) as AIProxyResponsePayload<TOutput>;
 
   if (data.status !== 'success' || !data.parsed_output) {
-    throw new Error(
-      `AI Proxy error: ${data.error || JSON.stringify(data)}`,
-    );
+    throw new Error(`AI Proxy error: ${data.error || JSON.stringify(data)}`);
   }
 
   return data.parsed_output;
