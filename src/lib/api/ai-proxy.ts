@@ -1,6 +1,6 @@
 import type { AIProxyRequestPayload, AIProxyResponsePayload } from '@/types';
 
-export async function callStructuredAIProxy<
+export async function callAIProxy<
   TOutput = Record<string, unknown>,
   TInput = Record<string, unknown>,
 >(payload: AIProxyRequestPayload<TInput>): Promise<TOutput> {
