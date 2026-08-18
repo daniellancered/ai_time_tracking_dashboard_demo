@@ -7,37 +7,62 @@ export function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-export function getRoleBadgeStyle(role: string): string {
-  const lower = role.toLowerCase();
-  if (lower.includes('customer success') || lower.includes('manager')) {
-    return 'bg-primary/10 text-primary border-primary/20';
-  }
-  if (lower.includes('engineer') || lower.includes('software')) {
-    return 'bg-secondary/10 text-secondary border-secondary/20';
-  }
-  if (lower.includes('designer') || lower.includes('product')) {
-    return 'bg-accent-3/10 text-accent-3 border-accent-3/20';
-  }
-  return 'bg-surface-subtle text-light border-border';
-}
-
-export function getCustomerTierBadgeStyle(tier: number): string {
-  switch (tier) {
-    case 1:
-      return 'bg-primary/10 text-primary border-primary/20';
-    case 2:
-      return 'bg-secondary/10 text-secondary border-secondary/20';
-    case 3:
-      return 'bg-accent-3/10 text-accent-3 border-accent-3/20';
-    default:
-      return 'bg-surface-subtle text-light border-border';
-  }
-}
-
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0,
   }).format(amount);
+}
+
+export function formatDateTime(isoString: string): string {
+  if (!isoString) return '—';
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return isoString;
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(date);
+}
+
+export function formatDateOnly(isoString: string): string {
+  if (!isoString) return '—';
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return isoString;
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(date);
+}
+
+export function formatTimeOnly(isoString: string): string {
+  if (!isoString) return '—';
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return isoString;
+  return new Intl.DateTimeFormat('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(date);
+}
+
+export function calculateDurationMinutes(startIso: string, endIso: string): number {
+  if (!startIso || !endIso) return 0;
+  const start = new Date(startIso).getTime();
+  const end = new Date(endIso).getTime();
+  if (isNaN(start) || isNaN(end) || end < start) return 0;
+  return Math.round((end - start) / (1000 * 60));
+}
+
+export function formatDuration(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  if (remainingMinutes === 0) return `${hours}h`;
+  return `${hours}h ${remainingMinutes}m`;
 }
