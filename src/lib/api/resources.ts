@@ -43,38 +43,19 @@ async function fetchFromResources<T>(resource: ResourceType, params: QueryParams
   return data;
 }
 
-export async function fetchEmployees(
-  params: {
-    role?: string;
-    email?: string;
-    maxResults?: number;
-    pageToken?: string;
-  } = {},
-): Promise<Employee[]> {
-  const data = await fetchFromResources<ApiResponse<Employee>>('employees', params);
+export async function fetchEmployees(): Promise<Employee[]> {
+  const data = await fetchFromResources<ApiResponse<Employee>>('employees');
   return data.items || [];
 }
 
-export async function fetchCompanies(
-  params: {
-    tier?: number;
-    account_owner_id?: string;
-    maxResults?: number;
-    pageToken?: string;
-  } = {},
-): Promise<Company[]> {
-  const data = await fetchFromResources<ApiResponse<Company>>('companies', params);
+export async function fetchCompanies(): Promise<Company[]> {
+  const data = await fetchFromResources<ApiResponse<Company>>('companies');
   return data.items || [];
 }
 
 export async function fetchEvents(params: {
   creator?: string;
   attendee?: string;
-  timeMin?: string;
-  timeMax?: string;
-  q?: string;
-  maxResults?: number;
-  pageToken?: string;
 }): Promise<CalendarEvent[]> {
   if (!params.creator && !params.attendee) {
     throw new Error('Events query requires at least one filter: creator or attendee email.');

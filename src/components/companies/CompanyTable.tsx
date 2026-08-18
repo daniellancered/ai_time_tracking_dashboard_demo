@@ -110,7 +110,7 @@ export default function CompanyTable({ companies, employees }: CompanyTableProps
                   return (
                     <tr key={company.id} className="hover:bg-surface-hover/60 transition-colors">
                       <td className="py-3 px-4">
-                        <div className="font-semibold text-dark text-sm">{company.name}</div>                  
+                        <div className="font-semibold text-dark text-sm">{company.name}</div>
                       </td>
 
                       <td className="py-3 px-4">
