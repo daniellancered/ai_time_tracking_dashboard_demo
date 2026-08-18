@@ -1,11 +1,12 @@
-import type {
-  CompaniesApiResponse,
-  EmployeesApiResponse,
-  EventsApiResponse,
-  ResourceType,
-} from '@/types';
+import type { CalendarEvent, Company, Employee, ResourceType } from '@/types';
 
 type QueryParams = Record<string, string | number | boolean | undefined | null>;
+
+type ApiResponse<T> = {
+  kind?: string;
+  items?: T[];
+  nextPageToken?: string;
+};
 
 async function fetchFromResources<T>(resource: ResourceType, params: QueryParams = {}): Promise<T> {
   const baseUrl = process.env.RESOURCES_BASE_URL;
@@ -49,8 +50,9 @@ export async function fetchEmployees(
     maxResults?: number;
     pageToken?: string;
   } = {},
-): Promise<EmployeesApiResponse> {
-  return fetchFromResources<EmployeesApiResponse>('employees', params);
+): Promise<Employee[]> {
+  const data = await fetchFromResources<ApiResponse<Employee>>('employees', params);
+  return data.items || [];
 }
 
 export async function fetchCompanies(
@@ -60,8 +62,9 @@ export async function fetchCompanies(
     maxResults?: number;
     pageToken?: string;
   } = {},
-): Promise<CompaniesApiResponse> {
-  return fetchFromResources<CompaniesApiResponse>('companies', params);
+): Promise<Company[]> {
+  const data = await fetchFromResources<ApiResponse<Company>>('companies', params);
+  return data.items || [];
 }
 
 export async function fetchEvents(params: {
@@ -72,9 +75,10 @@ export async function fetchEvents(params: {
   q?: string;
   maxResults?: number;
   pageToken?: string;
-}): Promise<EventsApiResponse> {
+}): Promise<CalendarEvent[]> {
   if (!params.creator && !params.attendee) {
     throw new Error('Events query requires at least one filter: creator or attendee email.');
   }
-  return fetchFromResources<EventsApiResponse>('events', params);
+  const data = await fetchFromResources<ApiResponse<CalendarEvent>>('events', params);
+  return data.items || [];
 }
