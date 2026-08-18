@@ -10,7 +10,7 @@ type EmployeeOverviewProps = {
 
 export default function EmployeeOverview({ employees, errorMsg }: EmployeeOverviewProps) {
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6 w-full">
       <div className="flex flex-col gap-2 border-b border-border pb-5">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-dark flex items-center gap-2">

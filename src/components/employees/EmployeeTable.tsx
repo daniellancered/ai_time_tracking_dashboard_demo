@@ -74,18 +74,13 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
                   const badgeClass = getRoleBadgeStyle(emp.role);
 
                   return (
-                    <tr
-                      key={emp.id}
-                      className="hover:bg-surface-hover/60 transition-colors"
-                    >
+                    <tr key={emp.id} className="hover:bg-surface-hover/60 transition-colors">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-slate-100 text-dark font-semibold text-xs border border-border">
                             {initials}
                           </div>
-                          <span className="font-semibold text-dark text-sm">
-                            {emp.name}
-                          </span>
+                          <span className="font-semibold text-dark text-sm">{emp.name}</span>
                         </div>
                       </td>
 
@@ -101,17 +96,12 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-1.5 text-light">
                           <Mail className="h-3.5 w-3.5 text-muted" />
-                          <span className="font-mono text-dark select-all">
-                            {emp.email}
-                          </span>
+                          <span className="font-mono text-dark select-all">{emp.email}</span>
                         </div>
                       </td>
 
                       <td className="py-3 px-4">
-                        <span
-                          className="font-mono text-light text-[11px]"
-                          title={emp.id}
-                        >
+                        <span className="font-mono text-light text-[11px]" title={emp.id}>
                           {emp.id.slice(0, 8)}...
                         </span>
                       </td>
@@ -130,10 +120,7 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
                 })
               ) : (
                 <tr>
-                  <td
-                    colSpan={5}
-                    className="py-8 text-center text-light text-xs"
-                  >
+                  <td colSpan={5} className="py-8 text-center text-light text-xs">
                     No employees matching &ldquo;{searchQuery}&rdquo;
                   </td>
                 </tr>
