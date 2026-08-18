@@ -11,17 +11,11 @@ export type ClientWorkCategory =
   | 'Troubleshooting (feeds)'
   | 'Troubleshooting (Smartly)';
 
-export type InternalWorkCategory =
-  | 'Learning'
-  | 'Team/company calls'
-  | 'Other internal tasks';
+export type InternalWorkCategory = 'Learning' | 'Team/company calls' | 'Other internal tasks';
 
 export type TimeOffCategory = 'PTO';
 
-export type EventCategory =
-  | ClientWorkCategory
-  | InternalWorkCategory
-  | TimeOffCategory;
+export type EventCategory = ClientWorkCategory | InternalWorkCategory | TimeOffCategory;
 
 export type CategoryGroup = 'Client Work' | 'Internal Work' | 'Time Off';
 

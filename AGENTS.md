@@ -90,13 +90,15 @@ src/components/Header.tsx
 - Avoid unnecessarily large components.
 - Prefer composition over complex conditional components.
 - Do not put API calls directly inside presentational components.
-- Keep business logic out of reusable UI components when possible.
+- Keep business logic and data manipulation out of reusable UI components when possible.
+- Helper, formatting, and badge-styling functions belong in `src/utils/`, not inline inside components.
 
 ## Next.js App Router
 
 Use the **App Router** exclusively.
 
 - Routes belong under `src/app/`.
+- `src/app/**/page.tsx` files should only handle data preparation / fetching and delegate all UI rendering to dedicated feature components under `src/components/[feature]/`.
 - Use Server Components by default.
 - Add `"use client"` only when client-side functionality is required.
 - Prefer Server Components for data fetching.
@@ -138,23 +140,23 @@ type Product = {
 
 ## Tailwind CSS
 
-Use **Tailwind CSS** for styling.
+Use **Tailwind CSS v4** with clean, minimalist admin dashboard aesthetics.
 
 - Prefer utility classes over custom CSS.
-- Avoid inline styles unless there is a specific reason.
+- Adhere to the configured `@theme` design tokens in `src/styles/globals.css`:
+  - `bg-primary` / `text-primary` (`#6F42C1`)
+  - `bg-secondary` / `text-secondary` (`#007BFF`)
+  - `bg-accent-1`, `bg-accent-2`, `bg-accent-3` (`#00CCCC`, `#0DCAF0`, `#17A2B8`)
+  - `text-dark` (`#0F172A` - primary text)
+  - `text-light` (`#64748B` - secondary text)
+  - `border-border` (`#E2E8F0` - crisp borders)
+  - `bg-surface` (`#FFFFFF` - flat card backgrounds)
+  - `bg-app-bg` (`#F8FAFC` - neutral page background)
+- Prioritize high utility, clear typography, and crisp solid borders over heavy gradients, neon glows, or deep drop shadows.
 - Avoid adding custom CSS for something Tailwind can handle.
 - Keep class names readable.
 - Use responsive utilities instead of JavaScript-based viewport detection.
-- Follow the project's existing Tailwind configuration and design tokens.
 - Reuse common styles through components rather than duplicating large class strings.
-
-Example:
-
-```tsx
-<button className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800">
-  Continue
-</button>
-```
 
 ## Data Fetching
 
