@@ -63,15 +63,20 @@ export default function HomePage() {
           </p>
         </Link>
 
-        <div className="rounded-lg border border-border bg-surface-subtle p-5 opacity-75">
+        <Link
+          href="/events"
+          className="group rounded-lg border border-border bg-surface p-5 transition-colors hover:border-slate-300"
+        >
           <div className="flex h-9 w-9 items-center justify-center rounded bg-accent-3/10 text-accent-3 mb-3">
             <CalendarDays className="h-4 w-4" />
           </div>
-          <h3 className="font-semibold text-sm text-dark">3. Calendar Events & AI</h3>
+          <h3 className="font-semibold text-sm text-dark group-hover:text-accent-3 transition-colors">
+            3. Calendar Events & AI
+          </h3>
           <p className="mt-1 text-xs text-light">
             Calendar sync, 15-criteria AI categorization, and client deduction.
           </p>
-        </div>
+        </Link>
       </div>
     </div>
   );

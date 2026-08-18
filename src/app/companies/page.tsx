@@ -9,9 +9,7 @@ export default async function CompaniesPage() {
   let errorMsg: string | null = null;
 
   try {
-    const [companiesRes, employeesRes] = await Promise.all([fetchCompanies(), fetchEmployees()]);
-    companies = companiesRes.items || [];
-    employees = employeesRes.items || [];
+    [companies, employees] = await Promise.all([fetchCompanies(), fetchEmployees()]);
   } catch (err) {
     errorMsg = err instanceof Error ? err.message : 'Failed to fetch companies';
   }

@@ -8,8 +8,7 @@ export default async function EmployeesPage() {
   let errorMsg: string | null = null;
 
   try {
-    const res = await fetchEmployees();
-    employees = res.items || [];
+    employees = await fetchEmployees();
   } catch (err) {
     errorMsg = err instanceof Error ? err.message : 'Failed to fetch employees';
   }
