@@ -4,7 +4,7 @@ import { Users, Building2, CalendarDays, ArrowRight, BarChart3 } from 'lucide-re
 
 export default function HomePage() {
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6 w-full">
       <div className="rounded-lg border border-border bg-surface p-6 sm:p-8">
         <div className="max-w-2xl space-y-2">
           <div className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
@@ -48,15 +48,20 @@ export default function HomePage() {
           </p>
         </Link>
 
-        <div className="rounded-lg border border-border bg-surface-subtle p-5 opacity-75">
+        <Link
+          href="/companies"
+          className="group rounded-lg border border-border bg-surface p-5 transition-colors hover:border-slate-300"
+        >
           <div className="flex h-9 w-9 items-center justify-center rounded bg-secondary/10 text-secondary mb-3">
             <Building2 className="h-4 w-4" />
           </div>
-          <h3 className="font-semibold text-sm text-dark">2. Companies</h3>
+          <h3 className="font-semibold text-sm text-dark group-hover:text-secondary transition-colors">
+            2. Companies
+          </h3>
           <p className="mt-1 text-xs text-light">
             CRM records, customer tiers, ARR values, and email domain mapping.
           </p>
-        </div>
+        </Link>
 
         <div className="rounded-lg border border-border bg-surface-subtle p-5 opacity-75">
           <div className="flex h-9 w-9 items-center justify-center rounded bg-accent-3/10 text-accent-3 mb-3">

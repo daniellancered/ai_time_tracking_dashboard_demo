@@ -21,6 +21,19 @@ export function getRoleBadgeStyle(role: string): string {
   return 'bg-surface-subtle text-light border-border';
 }
 
+export function getCustomerTierBadgeStyle(tier: number): string {
+  switch (tier) {
+    case 1:
+      return 'bg-primary/10 text-primary border-primary/20';
+    case 2:
+      return 'bg-secondary/10 text-secondary border-secondary/20';
+    case 3:
+      return 'bg-accent-3/10 text-accent-3 border-accent-3/20';
+    default:
+      return 'bg-surface-subtle text-light border-border';
+  }
+}
+
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
