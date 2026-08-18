@@ -1,1 +1,2 @@
-// Shared external clients & API helpers
+export * from './api/resources';
+export * from './api/ai-proxy';
