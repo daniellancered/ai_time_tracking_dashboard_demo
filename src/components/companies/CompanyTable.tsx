@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import Link from 'next/link';
-import { Search, Globe, DollarSign, UserCheck, Calendar, ChevronDown } from 'lucide-react';
+import { Search, Globe, DollarSign, UserCheck, ChevronDown } from 'lucide-react';
 import type { Company, Employee } from '@/types';
 import { formatCurrency, getCustomerTierBadgeStyle } from '@/utils';
 
@@ -96,9 +95,6 @@ export default function CompanyTable({ companies, employees }: CompanyTableProps
                 <th scope="col" className="py-3 px-4">
                   Account Owner
                 </th>
-                <th scope="col" className="py-3 px-4 text-right">
-                  Action
-                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -145,22 +141,12 @@ export default function CompanyTable({ companies, employees }: CompanyTableProps
                           <span className="text-light italic">Unassigned</span>
                         )}
                       </td>
-
-                      <td className="py-3 px-4 text-right">
-                        <Link
-                          href={`/events?q=${encodeURIComponent(company.name)}`}
-                          className="inline-flex items-center gap-1 font-medium text-secondary hover:underline"
-                        >
-                          <Calendar className="h-3.5 w-3.5" />
-                          View Events →
-                        </Link>
-                      </td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-light text-xs">
+                  <td colSpan={5} className="py-8 text-center text-light text-xs">
                     No companies matching your search criteria.
                   </td>
                 </tr>
