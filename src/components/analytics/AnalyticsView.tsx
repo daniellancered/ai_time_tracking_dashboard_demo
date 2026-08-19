@@ -1,16 +1,13 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
-  Clock,
-  Briefcase,
-  Building2,
-  Tag,
   Download,
   AlertCircle,
   RefreshCw,
   Sparkles,
 } from 'lucide-react';
+import SummaryCards from './SummaryCards';
 import OverviewBreakdown from './OverviewBreakdown';
 import EventTable from '@/components/events/EventTable';
 import useEmployeeCalendar from '@/hooks/useEmployeeCalendar';
@@ -42,64 +39,6 @@ export default function AnalyticsView({
     email: currentEmployee?.email,
     initialError: initialErrorMsg,
   });
-
-  const metrics = useMemo(() => {
-    let totalMinutes = 0;
-    let clientMinutes = 0;
-    let categorizedCount = 0;
-    const categoryMap = new Map<string, number>();
-    const clientMap = new Map<string, number>();
-
-    for (const ev of events) {
-      totalMinutes += ev.event.minutesDuration;
-
-      if (ev.category) {
-        categorizedCount++;
-        categoryMap.set(ev.category, (categoryMap.get(ev.category) || 0) + ev.event.minutesDuration);
-      }
-
-      if (ev.clientName) {
-        clientMinutes += ev.event.minutesDuration;
-        clientMap.set(ev.clientName, (clientMap.get(ev.clientName) || 0) + ev.event.minutesDuration);
-      }
-    }
-
-    const hasCategorized = categorizedCount > 0;
-    const totalHours = Math.round((totalMinutes / 60) * 10) / 10;
-    const clientHours = Math.round((clientMinutes / 60) * 10) / 10;
-    const clientPercentage =
-      totalMinutes > 0 ? Math.round((clientMinutes / totalMinutes) * 100) : 0;
-
-    let topCategory = '—';
-    let maxCatMinutes = 0;
-    for (const [cat, mins] of categoryMap.entries()) {
-      if (mins > maxCatMinutes) {
-        maxCatMinutes = mins;
-        topCategory = cat;
-      }
-    }
-
-    let topClient = '—';
-    let maxClientMinutes = 0;
-    for (const [client, mins] of clientMap.entries()) {
-      if (mins > maxClientMinutes) {
-        maxClientMinutes = mins;
-        topClient = client;
-      }
-    }
-
-    return {
-      totalHours,
-      clientHours,
-      clientPercentage,
-      hasCategorized,
-      topCategory,
-      topCategoryHours: Math.round((maxCatMinutes / 60) * 10) / 10,
-      topClient,
-      topClientHours: Math.round((maxClientMinutes / 60) * 10) / 10,
-      eventCount: events.length,
-    };
-  }, [events]);
 
   const handleExportCSV = () => {
     if (currentEmployee) {
@@ -182,86 +121,7 @@ export default function AnalyticsView({
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-lg border border-border bg-surface p-4">
-          <div className="flex items-center justify-between text-light">
-            <span className="text-xs font-semibold uppercase tracking-wider">
-              Total Time Logged
-            </span>
-            <div className="flex h-7 w-7 items-center justify-center rounded bg-primary/10 text-primary">
-              <Clock className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-2 text-2xl font-bold text-dark">
-            {metrics.totalHours} <span className="text-sm font-medium text-light">hrs</span>
-          </div>
-          <div className="text-[11px] text-light mt-1">
-            Across {metrics.eventCount} calendar events
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-border bg-surface p-4">
-          <div className="flex items-center justify-between text-light">
-            <span className="text-xs font-semibold uppercase tracking-wider">
-              Client Allocation
-            </span>
-            <div className="flex h-7 w-7 items-center justify-center rounded bg-secondary/10 text-secondary">
-              <Briefcase className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-2 text-2xl font-bold text-secondary">
-            {metrics.hasCategorized ? (
-              <>
-                {metrics.clientPercentage}%{' '}
-                <span className="text-sm font-medium text-light">({metrics.clientHours} hrs)</span>
-              </>
-            ) : (
-              <span className="text-xl font-bold text-light">—</span>
-            )}
-          </div>
-          <div className="text-[11px] text-light mt-1">
-            {metrics.hasCategorized
-              ? 'Client-facing meetings & work'
-              : 'Pending AI categorization'}
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-border bg-surface p-4">
-          <div className="flex items-center justify-between text-light">
-            <span className="text-xs font-semibold uppercase tracking-wider">Top Client</span>
-            <div className="flex h-7 w-7 items-center justify-center rounded bg-accent-3/10 text-accent-3">
-              <Building2 className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-2 text-base font-bold text-dark truncate" title={metrics.topClient}>
-            {metrics.hasCategorized ? metrics.topClient : '—'}
-          </div>
-          <div className="text-[11px] text-light mt-1">
-            {!metrics.hasCategorized
-              ? 'Pending AI categorization'
-              : metrics.topClientHours > 0
-                ? `${metrics.topClientHours} hrs logged`
-                : 'No client time'}
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-border bg-surface p-4">
-          <div className="flex items-center justify-between text-light">
-            <span className="text-xs font-semibold uppercase tracking-wider">Top Category</span>
-            <div className="flex h-7 w-7 items-center justify-center rounded bg-emerald-500/10 text-emerald-600">
-              <Tag className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-2 text-base font-bold text-dark truncate" title={metrics.topCategory}>
-            {metrics.hasCategorized ? metrics.topCategory : '—'}
-          </div>
-          <div className="text-[11px] text-light mt-1">
-            {metrics.hasCategorized && metrics.topCategoryHours > 0
-              ? `${metrics.topCategoryHours} hrs logged`
-              : 'Pending AI categorization'}
-          </div>
-        </div>
-      </div>
+      <SummaryCards events={events} isLoading={isLoading} />
 
       <OverviewBreakdown events={events} companies={companies} isLoading={isLoading} />
 
