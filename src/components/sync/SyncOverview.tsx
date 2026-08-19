@@ -34,6 +34,22 @@ export default function SyncOverview({
   const [forceAICategorize, setForceAICategorize] = useState<boolean>(false);
   const [isClearingLogs, setIsClearingLogs] = useState<boolean>(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [isProcessingPending, setIsProcessingPending] = useState<boolean>(false);
+  const [categorizeProgress, setCategorizeProgress] = useState<{
+    percent: number;
+    step: string;
+  } | null>(null);
+
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [syncProgress, setSyncProgress] = useState<{
+    percent: number;
+    step: string;
+  } | null>(null);
+  const [isClearing, setIsClearing] = useState<boolean>(false);
+  const [statusMessage, setStatusMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
 
   useEffect(() => {
     fetch('/api/sync')
@@ -48,6 +64,137 @@ export default function SyncOverview({
       })
       .catch(() => {});
   }, []);
+
+  const handleCategorizePending = async () => {
+    let timer1: NodeJS.Timeout | undefined;
+    let timer2: NodeJS.Timeout | undefined;
+    let timer3: NodeJS.Timeout | undefined;
+
+    try {
+      setIsProcessingPending(true);
+      setStatusMessage(null);
+      setCategorizeProgress({ percent: 18, step: 'Loading pending raw events...' });
+
+      timer1 = setTimeout(() => {
+        setCategorizeProgress({ percent: 52, step: 'Classifying events with AI proxy...' });
+      }, 1200);
+
+      timer2 = setTimeout(() => {
+        setCategorizeProgress({ percent: 84, step: 'Matching client domains and entities...' });
+      }, 3500);
+
+      timer3 = setTimeout(() => {
+        setCategorizeProgress({ percent: 94, step: 'Persisting categorized records...' });
+      }, 6500);
+
+      const res = await fetch('/api/categorize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to categorize pending events');
+      }
+
+      const data = await res.json();
+      setCategorizeProgress({ percent: 100, step: 'Categorization complete!' });
+
+      if (data.metadata) {
+        setMetadata(data.metadata);
+        setStoredCount(data.metadata.eventsProcessed);
+      }
+
+      setStatusMessage({
+        type: 'success',
+        text: `Successfully categorized ${data.categorizedCount || 0} pending events with AI!`,
+      });
+    } catch (err) {
+      setStatusMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Categorization failed',
+      });
+    } finally {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+      setTimeout(() => {
+        setIsProcessingPending(false);
+        setCategorizeProgress(null);
+      }, 600);
+    }
+  };
+
+  const handleStartSync = async () => {
+    let t1: NodeJS.Timeout | undefined;
+    let t2: NodeJS.Timeout | undefined;
+    let t3: NodeJS.Timeout | undefined;
+    let t4: NodeJS.Timeout | undefined;
+
+    try {
+      setIsSyncing(true);
+      setStatusMessage(null);
+      setSyncProgress({ percent: 15, step: 'Connecting to Google Calendar feeds...' });
+
+      t1 = setTimeout(() => {
+        setSyncProgress({ percent: 38, step: 'Ingesting & deduplicating calendar events...' });
+      }, 1200);
+
+      t2 = setTimeout(() => {
+        setSyncProgress({ percent: 64, step: 'Running OpenAI structured categorization...' });
+      }, 3600);
+
+      t3 = setTimeout(() => {
+        setSyncProgress({ percent: 85, step: 'Synthesizing client entities & work taxonomy...' });
+      }, 7000);
+
+      t4 = setTimeout(() => {
+        setSyncProgress({ percent: 95, step: 'Persisting single source of truth...' });
+      }, 11000);
+
+      const res = await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          target: syncTarget,
+          forceAICategorize,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to complete synchronization');
+      }
+
+      const data = await res.json();
+      setSyncProgress({ percent: 100, step: 'Sync completed successfully!' });
+
+      if (data.metadata) {
+        setMetadata(data.metadata);
+        setStoredCount(data.eventsProcessed);
+      }
+
+      setStatusMessage({
+        type: 'success',
+        text: `Sync completed successfully! Fetched ${data.eventsFetched} events and processed ${data.eventsProcessed} categorizations.`,
+      });
+    } catch (err) {
+      setStatusMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Synchronization failed',
+      });
+    } finally {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
+      setTimeout(() => {
+        setIsSyncing(false);
+        setSyncProgress(null);
+      }, 700);
+    }
+  };
 
   const handleExportAll = async () => {
     try {
@@ -96,52 +243,6 @@ export default function SyncOverview({
       });
     } finally {
       setIsClearingLogs(false);
-    }
-  };
-
-  const [isSyncing, setIsSyncing] = useState<boolean>(false);
-  const [isClearing, setIsClearing] = useState<boolean>(false);
-  const [statusMessage, setStatusMessage] = useState<{
-    type: 'success' | 'error';
-    text: string;
-  } | null>(null);
-
-  const handleStartSync = async () => {
-    try {
-      setIsSyncing(true);
-      setStatusMessage(null);
-
-      const res = await fetch('/api/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          target: syncTarget,
-          forceAICategorize,
-        }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to complete synchronization');
-      }
-
-      const data = await res.json();
-      if (data.metadata) {
-        setMetadata(data.metadata);
-        setStoredCount(data.eventsProcessed);
-      }
-
-      setStatusMessage({
-        type: 'success',
-        text: `Sync completed successfully! Fetched ${data.eventsFetched} events and processed ${data.eventsProcessed} categorizations.`,
-      });
-    } catch (err) {
-      setStatusMessage({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Synchronization failed',
-      });
-    } finally {
-      setIsSyncing(false);
     }
   };
 
@@ -247,7 +348,7 @@ export default function SyncOverview({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="p-3.5 rounded-lg bg-surface-subtle border border-border">
             <div className="flex items-center gap-1.5 text-light text-xs mb-1">
               <Clock className="h-3.5 w-3.5 text-primary" />
@@ -275,6 +376,63 @@ export default function SyncOverview({
             </div>
             <div className="text-2xl font-bold text-emerald-600">{metadata.eventsProcessed}</div>
             <div className="text-[11px] text-light mt-0.5">Categorized & stored</div>
+          </div>
+
+          <div className="p-3.5 rounded-lg bg-surface-subtle border border-border flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-1.5 text-light text-xs mb-1">
+                <AlertCircle
+                  className={`h-3.5 w-3.5 ${
+                    Math.max(0, metadata.eventsFetched - metadata.eventsProcessed) > 0
+                      ? 'text-amber-500'
+                      : 'text-slate-400'
+                  }`}
+                />
+                <span>Unprocessed Events</span>
+              </div>
+              <div
+                className={`text-2xl font-bold ${
+                  Math.max(0, metadata.eventsFetched - metadata.eventsProcessed) > 0
+                    ? 'text-amber-600'
+                    : 'text-slate-400'
+                }`}
+              >
+                {Math.max(0, metadata.eventsFetched - metadata.eventsProcessed)}
+              </div>
+              <div className="text-[11px] text-light mt-0.5">
+                {Math.max(0, metadata.eventsFetched - metadata.eventsProcessed) > 0
+                  ? 'Awaiting AI classification'
+                  : 'All events categorized'}
+              </div>
+            </div>
+
+            {isProcessingPending && categorizeProgress ? (
+              <div className="mt-2.5 space-y-1.5">
+                <div className="flex items-center justify-between text-[10px] font-medium text-amber-700">
+                  <span className="truncate max-w-[130px]">{categorizeProgress.step}</span>
+                  <span className="font-bold shrink-0">{categorizeProgress.percent}%</span>
+                </div>
+                <div className="w-full bg-amber-200 h-2 rounded-full overflow-hidden">
+                  <div
+                    className="bg-amber-600 h-full rounded-full transition-all duration-300 ease-out"
+                    style={{ width: `${categorizeProgress.percent}%` }}
+                  />
+                </div>
+              </div>
+            ) : (
+              Math.max(0, metadata.eventsFetched - metadata.eventsProcessed) > 0 && (
+                <button
+                  type="button"
+                  onClick={handleCategorizePending}
+                  disabled={isProcessingPending || isSyncing}
+                  className="mt-2.5 inline-flex w-fit items-center gap-1.5 rounded-md bg-amber-600 hover:bg-amber-700 px-2.5 py-1 text-[11px] font-semibold text-white transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
+                  title="Run AI categorization on all pending unprocessed events"
+                >
+                  <Sparkles className="h-3 w-3" />
+                  <span>Categorize with AI</span>
+                </button>
+              )
+            )}
           </div>
         </div>
       </div>
@@ -337,25 +495,34 @@ export default function SyncOverview({
           </div>
         </div>
 
-        <div className="pt-2 flex flex-col gap-3">
+        <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full">
           <button
             type="button"
             onClick={handleStartSync}
             disabled={isSyncing}
-            className="inline-flex items-center w-fit justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-60 shadow-xs cursor-pointer"
+            className="inline-flex items-center shrink-0 justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-60 shadow-xs cursor-pointer h-10"
           >
             <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
             <span>{isSyncing ? 'Synchronizing...' : 'Start Calendar Sync'}</span>
           </button>
 
-          <div className="text-xs text-light">
-            {isSyncing && (
-              <span className="inline-flex items-center gap-2 text-primary font-medium">
-                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                <span>Running calendar sync and AI categorization...</span>
-              </span>
-            )}
-          </div>
+          {isSyncing && syncProgress && (
+            <div className="flex-1 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2 space-y-1.5 min-w-0">
+              <div className="flex items-center justify-between text-xs font-semibold text-primary">
+                <div className="flex items-center gap-2 truncate min-w-0">
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin shrink-0" />
+                  <span className="truncate">{syncProgress.step}</span>
+                </div>
+                <span className="font-mono text-xs shrink-0 pl-2">{syncProgress.percent}%</span>
+              </div>
+              <div className="w-full bg-primary/15 h-2 rounded-full overflow-hidden">
+                <div
+                  className="bg-primary h-full rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${syncProgress.percent}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -384,19 +551,6 @@ export default function SyncOverview({
             )}
           </div>
         </div>
-
-        {isSyncing && (
-          <div className="rounded-lg border border-primary/20 bg-primary/5 p-3.5 animate-pulse space-y-2.5">
-            <div className="flex items-center gap-2 text-xs font-semibold text-primary">
-              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-              <span>Synchronizing with Google Calendar and running AI pipeline...</span>
-            </div>
-            <div className="space-y-1.5 pt-1">
-              <div className="h-2.5 bg-primary/15 rounded w-3/4" />
-              <div className="h-2.5 bg-primary/10 rounded w-1/2" />
-            </div>
-          </div>
-        )}
 
         {metadata.logs && metadata.logs.length > 0 ? (
           <div className="divide-y divide-border max-h-64 overflow-y-auto pr-1">

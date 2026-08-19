@@ -27,7 +27,10 @@ async function ensureFile(filePath: string, defaultContent: string = '{}'): Prom
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
     try {
-      await fs.access(filePath);
+      const stats = await fs.stat(filePath);
+      if (stats.size === 0) {
+        await fs.writeFile(filePath, defaultContent, 'utf-8');
+      }
     } catch {
       await fs.writeFile(filePath, defaultContent, 'utf-8');
     }
@@ -40,6 +43,7 @@ export async function getStoredRawEvents(): Promise<RawEventsStore> {
   await ensureFile(RAW_EVENTS_FILE);
   try {
     const raw = await fs.readFile(RAW_EVENTS_FILE, 'utf-8');
+    if (!raw || !raw.trim()) return {};
     return JSON.parse(raw) as RawEventsStore;
   } catch (error) {
     console.error('[storage] Failed to read raw events store:', error);
@@ -72,6 +76,7 @@ export async function getStoredCategorizations(): Promise<CategorizedEventsStore
   await ensureFile(CATEGORIZED_FILE);
   try {
     const raw = await fs.readFile(CATEGORIZED_FILE, 'utf-8');
+    if (!raw || !raw.trim()) return {};
     return JSON.parse(raw) as CategorizedEventsStore;
   } catch (error) {
     console.error('[storage] Failed to read categorized events store:', error);
@@ -121,7 +126,7 @@ export async function getSyncMetadata(): Promise<SyncMetadata> {
 
   try {
     const raw = await fs.readFile(SYNC_META_FILE, 'utf-8');
-    const data = JSON.parse(raw) as Partial<SyncMetadata>;
+    const data = raw && raw.trim() ? (JSON.parse(raw) as Partial<SyncMetadata>) : {};
     const logs = Array.isArray(data.logs) ? data.logs : [];
 
     const rawEvents = await getStoredRawEvents();
