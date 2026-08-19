@@ -48,7 +48,7 @@ export type ProcessedEvent = {
   category: EventCategory | null;
   clientName: string | null;
   clientId: string | null;
-  durationMinutes: number;
+  minutesDuration: number;
   reason?: string;
 };
 

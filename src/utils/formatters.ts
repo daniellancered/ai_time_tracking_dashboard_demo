@@ -29,17 +29,6 @@ export function formatDateTime(isoString: string): string {
   }).format(date);
 }
 
-export function formatDateOnly(isoString: string): string {
-  if (!isoString) return '—';
-  const date = new Date(isoString);
-  if (isNaN(date.getTime())) return isoString;
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(date);
-}
-
 export function formatTimeOnly(isoString: string): string {
   if (!isoString) return '—';
   const date = new Date(isoString);
@@ -51,7 +40,7 @@ export function formatTimeOnly(isoString: string): string {
   }).format(date);
 }
 
-export function calculateDurationMinutes(startIso: string, endIso: string): number {
+export function calculateDuration(startIso: string, endIso: string): number {
   if (!startIso || !endIso) return 0;
   const start = new Date(startIso).getTime();
   const end = new Date(endIso).getTime();

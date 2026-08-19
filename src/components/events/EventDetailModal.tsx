@@ -1,17 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  X,
-  Calendar,
-  Clock,
-  Timer,
-  User,
-  Users,
-  Building2,
-  Sparkles,
-  FileText,
-} from 'lucide-react';
+import { X, Calendar, Timer, User, Users, Building2, Sparkles, FileText } from 'lucide-react';
 import type { ProcessedEvent } from '@/types';
 import { formatDateTime, formatDuration, getCategoryBadgeStyle } from '@/utils';
 

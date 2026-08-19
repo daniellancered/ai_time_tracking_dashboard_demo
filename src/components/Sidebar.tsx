@@ -8,6 +8,7 @@ import {
   Users,
   Building2,
   CalendarDays,
+  BarChart3,
   Settings,
   Clock,
   ChevronLeft,
@@ -31,12 +32,17 @@ const NAV_ITEMS = [
     icon: Building2,
   },
   {
-    name: 'Calendar Events',
-    href: '/events',
+    name: 'Calendar',
+    href: '/calendar',
     icon: CalendarDays,
   },
   {
-    name: 'Sync Settings',
+    name: 'Analytics',
+    href: '/analytics',
+    icon: BarChart3,
+  },
+  {
+    name: 'Settings',
     href: '/settings',
     icon: Settings,
   },
@@ -130,7 +136,7 @@ export default function Sidebar() {
       <div className="border-t border-border p-3">
         {isExpanded ? (
           <div className="text-center text-[11px] text-light">
-            &copy; {new Date().getFullYear()} AI Time Tracking MVP
+            &copy; {new Date().getFullYear()} AI Time Tracking
           </div>
         ) : (
           <div className="flex justify-center">

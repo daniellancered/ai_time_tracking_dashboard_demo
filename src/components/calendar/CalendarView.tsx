@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Calendar as CalendarIcon, AlertCircle, RefreshCw } from 'lucide-react';
-import type { ProcessedEvent, Employee, CalendarEvent } from '@/types';
-import { processEvent } from '@/utils';
+import type { ProcessedEvent, Employee } from '@/types';
+import useEmployeeCalendar from '@/hooks/useEmployeeCalendar';
 import CalendarSidebar from './CalendarSidebar';
 import CalendarToolbar from './CalendarToolbar';
 import CalendarGrid from './CalendarGrid';
@@ -20,9 +20,6 @@ export default function CalendarView({ employees }: CalendarViewProps) {
   );
 
   const [searchEmployeeQuery, setSearchEmployeeQuery] = useState('');
-  const [events, setEvents] = useState<ProcessedEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<ProcessedEvent | null>(null);
   const [selectedDayEvents, setSelectedDayEvents] = useState<{
     date: Date;
@@ -41,48 +38,18 @@ export default function CalendarView({ employees }: CalendarViewProps) {
     );
   }, [employees, searchEmployeeQuery]);
 
+  const { events, isLoading, errorMsg } = useEmployeeCalendar({
+    email: currentEmployee?.email,
+  });
+
   useEffect(() => {
-    if (!currentEmployee?.email) return;
-
-    let isMounted = true;
-
-    async function loadEvents() {
-      try {
-        setIsLoading(true);
-        setEvents([]);
-        setErrorMsg(null);
-        const res = await fetch(`/api/events?creator=${encodeURIComponent(currentEmployee.email)}`);
-        if (!res.ok) throw new Error('Failed to load calendar events');
-        const data: CalendarEvent[] = await res.json();
-        if (isMounted) {
-          const processed = data.map((ev) => processEvent(ev));
-          setEvents(processed);
-
-          if (processed.length > 0 && processed[0].event.start?.dateTime) {
-            const firstDate = new Date(processed[0].event.start.dateTime);
-            if (!isNaN(firstDate.getTime())) {
-              setCurrentDate(new Date(firstDate.getFullYear(), firstDate.getMonth(), 1));
-            }
-          }
-        }
-      } catch (err) {
-        if (isMounted) {
-          setErrorMsg(err instanceof Error ? err.message : 'Failed to fetch calendar');
-          setEvents([]);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+    if (events.length > 0 && events[0].event.start?.dateTime) {
+      const firstDate = new Date(events[0].event.start.dateTime);
+      if (!isNaN(firstDate.getTime())) {
+        setCurrentDate(new Date(firstDate.getFullYear(), firstDate.getMonth(), 1));
       }
     }
-
-    loadEvents();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [currentEmployee]);
+  }, [events]);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
