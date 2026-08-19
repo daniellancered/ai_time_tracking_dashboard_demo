@@ -35,6 +35,7 @@ export default function EventTable({
   onEventsChange,
   onRefresh,
 }: EventTableProps) {
+  const [statusTab, setStatusTab] = useState<'processed' | 'pending'>('processed');
   const [events, setEvents] = useState<ProcessedEvent[]>(initialEvents);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -42,11 +43,20 @@ export default function EventTable({
   const [isCategorizing, setIsCategorizing] = useState<boolean>(false);
   const [selectedEvent, setSelectedEvent] = useState<ProcessedEvent | null>(null);
 
-  const uncategorizedCount = useMemo(() => {
-    return events.filter((ev) => !ev.category).length;
+  const { processedCount, pendingCount } = useMemo(() => {
+    let proc = 0;
+    let pend = 0;
+    for (const ev of events) {
+      if (ev.category) {
+        proc++;
+      } else {
+        pend++;
+      }
+    }
+    return { processedCount: proc, pendingCount: pend };
   }, [events]);
 
-  const hasUncategorizedEvents = uncategorizedCount > 0;
+  const hasUncategorizedEvents = pendingCount > 0;
 
   useEffect(() => {
     setEvents(initialEvents);
@@ -54,7 +64,7 @@ export default function EventTable({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedCategory, events]);
+  }, [searchQuery, selectedCategory, statusTab, events]);
 
   const handleBatchCategorize = async () => {
     try {
@@ -93,6 +103,9 @@ export default function EventTable({
 
   const filteredEvents = useMemo(() => {
     return events.filter((ev) => {
+      if (statusTab === 'processed' && !ev.category) return false;
+      if (statusTab === 'pending' && Boolean(ev.category)) return false;
+
       const q = searchQuery.toLowerCase();
       const matchesSearch =
         !q ||
@@ -106,7 +119,7 @@ export default function EventTable({
 
       return matchesSearch && matchesCategory;
     });
-  }, [events, searchQuery, selectedCategory]);
+  }, [events, statusTab, searchQuery, selectedCategory]);
 
   const totalPages = Math.ceil(filteredEvents.length / ITEMS_PER_PAGE) || 1;
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -117,8 +130,101 @@ export default function EventTable({
   const startEntry = filteredEvents.length === 0 ? 0 : startIndex + 1;
   const endEntry = Math.min(startIndex + ITEMS_PER_PAGE, filteredEvents.length);
 
+  const handleTabChange = (tab: 'processed' | 'pending') => {
+    setStatusTab(tab);
+    if (tab === 'pending') {
+      setSelectedCategory('all');
+    }
+  };
+
   return (
     <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
+        <div className="flex items-center gap-1.5 p-1 rounded-lg bg-surface border border-border self-start">
+          <button
+            type="button"
+            onClick={() => handleTabChange('processed')}
+            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+              statusTab === 'processed'
+                ? 'bg-primary text-white shadow-xs'
+                : 'text-light hover:text-dark hover:bg-surface-hover'
+            }`}
+          >
+            <span>Processed</span>
+            <span
+              className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                statusTab === 'processed'
+                  ? 'bg-white/20 text-white'
+                  : 'bg-emerald-50 text-emerald-700 font-medium'
+              }`}
+            >
+              {processedCount}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange('pending')}
+            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+              statusTab === 'pending'
+                ? 'bg-primary text-white shadow-xs'
+                : 'text-light hover:text-dark hover:bg-surface-hover'
+            }`}
+          >
+            <span>Pending</span>
+            <span
+              className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                statusTab === 'pending'
+                  ? 'bg-white/20 text-white'
+                  : pendingCount > 0
+                    ? 'bg-amber-100 text-amber-800 animate-pulse'
+                    : 'bg-slate-100 text-light font-normal'
+              }`}
+            >
+              {pendingCount}
+            </span>
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+          {onRefresh && (
+            <button
+              type="button"
+              onClick={onRefresh}
+              disabled={isLoading || isCategorizing}
+              className="inline-flex items-center gap-1.5 rounded border border-border bg-surface px-3 py-1.5 text-xs font-medium text-dark hover:bg-surface-hover transition-colors disabled:opacity-50 cursor-pointer"
+              title="Fetch latest events from Google Calendar"
+            >
+              <RefreshCw
+                className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin text-primary' : 'text-light'}`}
+              />
+              <span>Fetch Latest Events</span>
+            </button>
+          )}
+
+          {hasUncategorizedEvents && (
+            <button
+              type="button"
+              onClick={handleBatchCategorize}
+              disabled={isCategorizing || isLoading || events.length === 0}
+              className="inline-flex items-center gap-1.5 rounded bg-primary px-3.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50 cursor-pointer shadow-xs"
+            >
+              {isCategorizing ? (
+                <>
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                  <span>AI Categorizing...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>Auto Categorize with AI ({pendingCount})</span>
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2.5 flex-1">
           <div className="relative flex-1 min-w-[240px] max-w-sm">
@@ -133,54 +239,20 @@ export default function EventTable({
             />
           </div>
 
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            disabled={isLoading}
-            className="h-9 px-3 rounded border border-border bg-surface text-xs text-dark focus:outline-none focus:border-primary transition-colors cursor-pointer max-w-[240px] truncate disabled:opacity-60"
-          >
-            <option value="all">All 15 Categories</option>
-            {ALL_CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex items-center gap-2.5 shrink-0">
-          {onRefresh && (
-            <button
-              type="button"
-              onClick={onRefresh}
-              disabled={isLoading || isCategorizing}
-              className="inline-flex items-center gap-1.5 rounded border border-border bg-surface px-3 py-2 text-xs font-medium text-dark hover:bg-surface-hover transition-colors disabled:opacity-50 cursor-pointer"
-              title="Fetch latest events from Google Calendar"
+          {statusTab !== 'pending' && (
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              disabled={isLoading}
+              className="h-9 px-3 rounded border border-border bg-surface text-xs text-dark focus:outline-none focus:border-primary transition-colors cursor-pointer max-w-[240px] truncate disabled:opacity-60"
             >
-              <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin text-primary' : 'text-light'}`} />
-              <span>Fetch Latest Events</span>
-            </button>
-          )}
-
-          {hasUncategorizedEvents && (
-            <button
-              type="button"
-              onClick={handleBatchCategorize}
-              disabled={isCategorizing || isLoading || events.length === 0}
-              className="inline-flex items-center gap-1.5 rounded bg-primary px-3.5 py-2 text-xs font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50 cursor-pointer shadow-xs"
-            >
-              {isCategorizing ? (
-                <>
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                  <span>AI is categorizing...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-3.5 w-3.5" />
-                  <span>Categorize with AI ({uncategorizedCount})</span>
-                </>
-              )}
-            </button>
+              <option value="all">All Categories</option>
+              {ALL_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
           )}
         </div>
       </div>
@@ -309,8 +381,22 @@ export default function EventTable({
                 })
               ) : (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-light text-xs">
-                    No calendar events found matching the selected filters.
+                  <td colSpan={6} className="py-10 text-center text-light text-xs">
+                    {statusTab === 'pending' && pendingCount === 0 ? (
+                      <div className="flex flex-col items-center justify-center gap-1 text-slate-500">
+                        <Sparkles className="h-5 w-5 text-primary opacity-70 mb-0.5" />
+                        <span className="font-semibold text-dark text-sm">No pending items</span>
+                        <span className="text-light text-xs">All events for this employee have been categorized.</span>
+                      </div>
+                    ) : statusTab === 'processed' && processedCount === 0 ? (
+                      <div className="flex flex-col items-center justify-center gap-1">
+                        <Sparkles className="h-5 w-5 text-muted mb-0.5" />
+                        <span className="font-semibold text-dark text-sm">No processed events yet</span>
+                        <span className="text-light text-xs">Switch to the Pending tab and run Auto Categorize with AI.</span>
+                      </div>
+                    ) : (
+                      'No calendar events found matching the selected filters.'
+                    )}
                   </td>
                 </tr>
               )}
