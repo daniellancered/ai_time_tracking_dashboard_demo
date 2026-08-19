@@ -8,7 +8,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import SummaryCards from './SummaryCards';
-import OverviewBreakdown from './OverviewBreakdown';
+import TimeBreakdown from './TimeBreakdown';
 import EventTable from '@/components/events/EventTable';
 import useEmployeeCalendar from '@/hooks/useEmployeeCalendar';
 import type { Employee, Company } from '@/types';
@@ -123,7 +123,7 @@ export default function AnalyticsView({
 
       <SummaryCards events={events} isLoading={isLoading} />
 
-      <OverviewBreakdown events={events} companies={companies} isLoading={isLoading} />
+      <TimeBreakdown events={events} companies={companies} isLoading={isLoading} />
 
       <div className="border-t border-border pt-6 space-y-3">
         <div>
