@@ -409,7 +409,7 @@ export default function TimeBreakdown({
                           <span
                             className={`inline-flex items-center rounded border px-1.5 py-0.2 text-[10px] font-semibold shrink-0 ${tierBadge}`}
                           >
-                            {item.company.customer_tier}
+                            Tier {item.company.customer_tier}
                           </span>
                         )}
                         <span className="text-light text-[11px] shrink-0">

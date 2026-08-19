@@ -10,7 +10,7 @@ import TimeBreakdown from './TimeBreakdown';
 import EventTable from '@/components/events/EventTable';
 import useEmployeeCalendar from '@/hooks/useEmployeeCalendar';
 import type { Employee, Company } from '@/types';
-import { exportEventsToCSV, getDateRangeFromPreset, type DateRangePreset } from '@/utils';
+import { getDateRangeFromPreset, type DateRangePreset } from '@/utils';
 
 type AnalyticsViewProps = {
   employees: Employee[];
@@ -87,20 +87,9 @@ export default function AnalyticsView({
     return Math.round((totalMinutes / 60) * 10) / 10;
   }, [filteredEvents]);
 
-  const handleExportCSV = () => {
-    if (selectedEmployeeId === 'all') {
-      exportEventsToCSV(filteredEvents, 'all_employees');
-    } else if (currentEmployee) {
-      exportEventsToCSV(filteredEvents, currentEmployee.name);
-    }
-  };
-
   return (
     <div className="space-y-5 w-full">
-      <AnalyticsHeader
-        onExportCSV={handleExportCSV}
-        isExportDisabled={isLoading || filteredEvents.length === 0}
-      />
+      <AnalyticsHeader />
 
       <EmployeeFilterBanner
         employees={employees}

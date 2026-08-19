@@ -1,39 +1,73 @@
 import { NextResponse } from 'next/server';
-import { fetchEmployees, fetchEvents } from '@/lib/api/resources';
-import { getStoredCategorizations, getStoredRawEvents, saveRawEvents } from '@/lib/storage';
+import { fetchEmployees, fetchEvents, fetchCompanies } from '@/lib/api/resources';
+import { categorizeEvents } from '@/lib/categorize';
+import {
+  getStoredCategorizations,
+  getStoredRawEvents,
+  saveRawEvents,
+  saveCategorizedEvents,
+  recordSyncActivity,
+} from '@/lib/storage';
 import type { CalendarEvent, ProcessedEvent } from '@/types';
 
 export async function GET() {
   try {
     const eventMap = new Map<string, CalendarEvent>();
-    const storedRaw = await getStoredRawEvents();
 
+    const storedRaw = await getStoredRawEvents();
     for (const [id, ev] of Object.entries(storedRaw)) {
       eventMap.set(id, ev);
     }
 
-    if (eventMap.size === 0) {
-      const employees = await fetchEmployees();
-      for (const emp of employees) {
-        const created = await fetchEvents({ creator: emp.email }).catch(() => []);
-        const attended = await fetchEvents({ attendee: emp.email }).catch(() => []);
+    const [employees, companies] = await Promise.all([
+      fetchEmployees().catch(() => []),
+      fetchCompanies().catch(() => []),
+    ]);
+
+    await Promise.all(
+      employees.map(async (emp) => {
+        const [created, attended] = await Promise.all([
+          fetchEvents({ creator: emp.email }).catch(() => []),
+          fetchEvents({ attendee: emp.email }).catch(() => []),
+        ]);
         for (const ev of [...created, ...attended]) {
           if (ev.id && !eventMap.has(ev.id)) {
             eventMap.set(ev.id, ev);
           }
         }
-      }
-      await saveRawEvents(Array.from(eventMap.values()));
-    }
+      }),
+    );
 
     const rawEvents = Array.from(eventMap.values());
+    await saveRawEvents(rawEvents);
+
+    let storedCategorizations = await getStoredCategorizations();
+    const uncategorized = rawEvents.filter(
+      (ev) => !storedCategorizations[ev.id] || !storedCategorizations[ev.id].category,
+    );
+
+    if (uncategorized.length > 0) {
+      try {
+        const categorizedItems = await categorizeEvents(uncategorized, companies);
+        await saveCategorizedEvents(categorizedItems);
+        storedCategorizations = await getStoredCategorizations();
+
+        await recordSyncActivity({
+          target: 'All Team Members (Export Pipeline)',
+          eventsFetched: rawEvents.length,
+          eventsProcessed: Object.keys(storedCategorizations).length,
+          message: `Export pipeline fetched ${rawEvents.length} events and processed ${categorizedItems.length} new AI categorizations across all employees.`,
+        });
+      } catch (catErr) {
+        console.error('[export] Failed to categorize pending events during export:', catErr);
+      }
+    }
+
     rawEvents.sort((a, b) => {
       const timeA = new Date(a.start?.dateTime || 0).getTime();
       const timeB = new Date(b.start?.dateTime || 0).getTime();
       return timeA - timeB;
     });
-
-    const storedCategorizations = await getStoredCategorizations();
 
     const processedEvents: ProcessedEvent[] = rawEvents.map((event) => {
       const stored = storedCategorizations[event.id];
@@ -48,7 +82,7 @@ export async function GET() {
 
     return NextResponse.json({ items: processedEvents });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to export all events';
+    const message = error instanceof Error ? error.message : 'Failed to export and process all events';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -206,8 +206,19 @@ export default function SyncOverview({
         exportEventsToCSV(data.items, 'all_employees');
         setStatusMessage({
           type: 'success',
-          text: `Exported ${data.items.length} events across all employees to CSV. Ready to paste into Google Sheets.`,
+          text: `Exported ${data.items.length} fully processed events across all employees to CSV.`,
         });
+
+        const syncRes = await fetch('/api/sync').catch(() => null);
+        if (syncRes && syncRes.ok) {
+          const syncData = await syncRes.json();
+          if (syncData.metadata) {
+            setMetadata(syncData.metadata);
+          }
+          if (typeof syncData.eventsProcessed === 'number') {
+            setStoredCount(syncData.eventsProcessed);
+          }
+        }
       } else {
         throw new Error('No events found to export.');
       }
@@ -287,10 +298,10 @@ export default function SyncOverview({
         <div>
           <h1 className="text-xl font-bold tracking-tight text-dark flex items-center gap-2">
             <RefreshCw className="h-5 w-5 text-primary" />
-            Calendar & AI Sync Settings
+            Calendar Sync & Data Export
           </h1>
           <p className="text-xs text-light mt-0.5">
-            Trigger on-demand calendar synchronization, run AI categorization pipelines, and manage cache.
+            Trigger on-demand calendar synchronization, run AI categorization pipelines, and export complete datasets.
           </p>
         </div>
       </div>
@@ -323,12 +334,12 @@ export default function SyncOverview({
             <button
               type="button"
               onClick={handleExportAll}
-              disabled={isExporting || isSyncing || (metadata.eventsFetched === 0 && storedCount === 0)}
+              disabled={isExporting || isSyncing}
               className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-dark hover:bg-slate-50 transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
-              title="Export all organization events across all employees for Google Sheets evaluation"
+              title="Fetch latest events from Google feeds and export all organization events across all employees for Google Sheets evaluation"
             >
               <Download className={`h-3.5 w-3.5 ${isExporting ? 'animate-bounce text-primary' : 'text-light'}`} />
-              <span>{isExporting ? 'Exporting...' : 'Export All Events (CSV)'}</span>
+              <span>{isExporting ? 'Fetching & Exporting...' : 'Export All Events (CSV)'}</span>
             </button>
 
             <span

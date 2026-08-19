@@ -5,33 +5,56 @@ export function exportEventsToCSV(events: ProcessedEvent[], employeeName: string
   if (events.length === 0) return;
 
   const headers = [
+    'Event ID',
     'Event Title',
-    'Organizer / Employee',
+    'Description',
+    'Organizer Email',
     'Start Date & Time',
+    'Start ISO',
+    'End Date & Time',
+    'End ISO',
     'Duration (Minutes)',
     'Duration (Hours)',
+    'Attendees Count',
+    'Attendees (Emails)',
     'AI Category',
-    'Attributed Client',
+    'Client Name',
     'Client ID',
-    'AI Classification Reason',
+    'AI Categorization Reason',
   ];
 
   const rows = events.map((ev) => {
-    const hours = (Math.round((ev.event.minutesDuration / 60) * 10) / 10).toFixed(1);
+    const hours = (Math.round((ev.event.minutesDuration / 60) * 100) / 100).toFixed(2);
+    const id = `"${(ev.event.id || '').replace(/"/g, '""')}"`;
     const title = `"${(ev.event.summary || 'Untitled').replace(/"/g, '""')}"`;
+    const description = `"${(ev.event.description || '').replace(/"/g, '""')}"`;
     const creator = `"${(ev.event.creator?.email || '').replace(/"/g, '""')}"`;
-    const date = `"${formatDateTime(ev.event.start?.dateTime)}"`;
+    const startDate = `"${formatDateTime(ev.event.start?.dateTime)}"`;
+    const startIso = `"${(ev.event.start?.dateTime || '').replace(/"/g, '""')}"`;
+    const endDate = `"${formatDateTime(ev.event.end?.dateTime)}"`;
+    const endIso = `"${(ev.event.end?.dateTime || '').replace(/"/g, '""')}"`;
+    const minutes = ev.event.minutesDuration ?? 0;
+    const attendees = ev.event.attendees || [];
+    const attendeesCount = attendees.length;
+    const attendeesEmails = `"${attendees.map((a) => a.email).join(', ').replace(/"/g, '""')}"`;
     const category = `"${(ev.category || 'Uncategorized').replace(/"/g, '""')}"`;
     const client = `"${(ev.clientName || 'None / Internal').replace(/"/g, '""')}"`;
     const clientId = `"${(ev.clientId || '').replace(/"/g, '""')}"`;
     const reason = `"${(ev.reason || '').replace(/"/g, '""')}"`;
 
     return [
+      id,
       title,
+      description,
       creator,
-      date,
-      ev.event.minutesDuration,
+      startDate,
+      startIso,
+      endDate,
+      endIso,
+      minutes,
       hours,
+      attendeesCount,
+      attendeesEmails,
       category,
       client,
       clientId,

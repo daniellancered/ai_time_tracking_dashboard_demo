@@ -42,7 +42,7 @@ const NAV_ITEMS = [
     icon: BarChart3,
   },
   {
-    name: 'Sync',
+    name: 'Sync & Export',
     href: '/sync',
     icon: RefreshCw,
   },

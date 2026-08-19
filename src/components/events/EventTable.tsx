@@ -39,6 +39,7 @@ export default function EventTable({
   const [events, setEvents] = useState<ProcessedEvent[]>(initialEvents);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedClient, setSelectedClient] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [isCategorizing, setIsCategorizing] = useState<boolean>(false);
   const [selectedEvent, setSelectedEvent] = useState<ProcessedEvent | null>(null);
@@ -64,7 +65,7 @@ export default function EventTable({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedCategory, statusTab, events]);
+  }, [searchQuery, selectedCategory, selectedClient, statusTab, events]);
 
   const handleBatchCategorize = async () => {
     try {
@@ -117,9 +118,16 @@ export default function EventTable({
 
       const matchesCategory = selectedCategory === 'all' || ev.category === selectedCategory;
 
-      return matchesSearch && matchesCategory;
+      const matchesClient =
+        selectedClient === 'all' ||
+        (selectedClient === 'internal' && !ev.clientName && !ev.clientId) ||
+        (selectedClient !== 'internal' &&
+          (ev.clientName?.toLowerCase() === selectedClient.toLowerCase() ||
+            ev.clientId === selectedClient));
+
+      return matchesSearch && matchesCategory && matchesClient;
     });
-  }, [events, statusTab, searchQuery, selectedCategory]);
+  }, [events, statusTab, searchQuery, selectedCategory, selectedClient]);
 
   const totalPages = Math.ceil(filteredEvents.length / ITEMS_PER_PAGE) || 1;
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -252,7 +260,7 @@ export default function EventTable({
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               disabled={isLoading}
-              className="h-9 px-3 rounded border border-border bg-surface text-xs text-dark focus:outline-none focus:border-primary transition-colors cursor-pointer max-w-[240px] truncate disabled:opacity-60"
+              className="h-9 px-3 rounded border border-border bg-surface text-xs text-dark focus:outline-none focus:border-primary transition-colors cursor-pointer max-w-[200px] truncate disabled:opacity-60"
             >
               <option value="all">All Categories</option>
               {ALL_CATEGORIES.map((cat) => (
@@ -262,6 +270,23 @@ export default function EventTable({
               ))}
             </select>
           )}
+
+          <select
+            value={selectedClient}
+            onChange={(e) => setSelectedClient(e.target.value)}
+            disabled={isLoading}
+            className="h-9 px-3 rounded border border-border bg-surface text-xs text-dark focus:outline-none focus:border-primary transition-colors cursor-pointer max-w-[200px] truncate disabled:opacity-60"
+          >
+            <option value="all">All Clients & Internal</option>
+            <option value="internal">🏢 Internal (No Client)</option>
+            <optgroup label="Client Accounts">
+              {companies.map((c) => (
+                <option key={c.id} value={c.name}>
+                  {c.name}
+                </option>
+              ))}
+            </optgroup>
+          </select>
         </div>
       </div>
 
