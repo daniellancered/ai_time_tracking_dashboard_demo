@@ -287,6 +287,8 @@ export default function EventTable({
                             <Building2 className="h-3 w-3 text-primary" />
                             <span>{ev.clientName}</span>
                           </div>
+                        ) : !ev.category ? (
+                          <span className="text-light italic text-[11px]">—</span>
                         ) : (
                           <span className="text-light italic text-[11px]">Internal / None</span>
                         )}
