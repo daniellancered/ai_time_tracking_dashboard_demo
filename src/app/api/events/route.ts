@@ -15,10 +15,8 @@ export async function GET(request: Request) {
       );
     }
 
-    const [created, attended] = await Promise.all([
-      fetchEvents({ creator: email }).catch(() => []),
-      fetchEvents({ attendee: email }).catch(() => []),
-    ]);
+    const created = await fetchEvents({ creator: email }).catch(() => []);
+    const attended = await fetchEvents({ attendee: email }).catch(() => []);
 
     const eventMap = new Map<string, CalendarEvent>();
     for (const ev of [...created, ...attended]) {
@@ -35,7 +33,6 @@ export async function GET(request: Request) {
     });
 
     const storedCategorizations = await getStoredCategorizations();
-
     const processedEvents: ProcessedEvent[] = rawEvents.map((event) => {
       const stored = storedCategorizations[event.id];
       return {

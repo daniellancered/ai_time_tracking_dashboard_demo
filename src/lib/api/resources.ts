@@ -42,8 +42,13 @@ async function fetchFromResources<T>(resource: ResourceType, params: QueryParams
   });
 
   if (!response.ok) {
-    const errorText = await response.text().catch(() => '');
-    throw new Error(`[${resource}] ${response.status}: ${errorText || response.statusText}`);
+    const rawText = await response.text().catch(() => '');
+    const isHtml = rawText.includes('<html') || rawText.includes('<!DOCTYPE');
+    const cleanError = isHtml
+      ? `Upstream returned HTML error page (${rawText.slice(0, 150).replace(/\s+/g, ' ')}...)`
+      : rawText || response.statusText;
+
+    throw new Error(`[${resource}] ${response.status}: ${cleanError}`);
   }
 
   const data = (await response.json()) as T;

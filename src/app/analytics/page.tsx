@@ -13,7 +13,8 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
   let errorMsg: string | null = null;
 
   try {
-    [employees, companies] = await Promise.all([fetchEmployees(), fetchCompanies()]);
+    employees = await fetchEmployees();
+    companies = await fetchCompanies();
   } catch (err) {
     errorMsg = err instanceof Error ? err.message : 'Failed to fetch base directory data';
   }
