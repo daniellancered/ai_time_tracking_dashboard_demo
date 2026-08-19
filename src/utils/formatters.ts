@@ -55,3 +55,58 @@ export function formatDuration(minutes: number): string {
   if (remainingMinutes === 0) return `${hours}h`;
   return `${hours}h ${remainingMinutes}m`;
 }
+
+export type DateRangePreset =
+  | 'all'
+  | 'today'
+  | 'this_week'
+  | 'last_7_days'
+  | 'this_month'
+  | 'last_30_days'
+  | 'custom';
+
+export function getDateRangeFromPreset(preset: DateRangePreset): {
+  startDate: string;
+  endDate: string;
+} {
+  const now = new Date();
+  const formatDate = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const todayStr = formatDate(now);
+
+  switch (preset) {
+    case 'today':
+      return { startDate: todayStr, endDate: todayStr };
+    case 'this_week': {
+      const dayOfWeek = now.getDay();
+      const diffToMonday = (dayOfWeek + 6) % 7;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - diffToMonday);
+      return { startDate: formatDate(monday), endDate: todayStr };
+    }
+    case 'last_7_days': {
+      const past7 = new Date(now);
+      past7.setDate(now.getDate() - 6);
+      return { startDate: formatDate(past7), endDate: todayStr };
+    }
+    case 'this_month': {
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      return { startDate: formatDate(firstDay), endDate: todayStr };
+    }
+    case 'last_30_days': {
+      const past30 = new Date(now);
+      past30.setDate(now.getDate() - 29);
+      return { startDate: formatDate(past30), endDate: todayStr };
+    }
+    case 'all':
+    case 'custom':
+    default:
+      return { startDate: '', endDate: '' };
+  }
+}
+
