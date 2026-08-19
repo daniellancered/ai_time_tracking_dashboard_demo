@@ -12,6 +12,7 @@ import {
   Clock,
   ChevronLeft,
   ChevronRight,
+  RefreshCw,
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -39,6 +40,11 @@ const NAV_ITEMS = [
     name: 'Analytics',
     href: '/analytics',
     icon: BarChart3,
+  },
+  {
+    name: 'Sync',
+    href: '/sync',
+    icon: RefreshCw,
   },
 ];
 

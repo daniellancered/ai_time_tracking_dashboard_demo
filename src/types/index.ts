@@ -1,5 +1,7 @@
 import type { ALL_CATEGORIES } from '@/constants';
 
+export * from './storage';
+
 export type EventCategory = (typeof ALL_CATEGORIES)[number];
 
 export type ResourceType = 'employees' | 'companies' | 'events' | 'apikey';

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { fetchEvents } from '@/lib/api/resources';
-import { getStoredCategorizations } from '@/lib/storage';
+import { getStoredCategorizations, saveRawEvents, recordSyncActivity } from '@/lib/storage';
 import type { CalendarEvent, ProcessedEvent } from '@/types';
 
 export async function GET(request: Request) {
@@ -32,6 +32,8 @@ export async function GET(request: Request) {
       return timeA - timeB;
     });
 
+    await saveRawEvents(rawEvents);
+
     const storedCategorizations = await getStoredCategorizations();
     const processedEvents: ProcessedEvent[] = rawEvents.map((event) => {
       const stored = storedCategorizations[event.id];
@@ -42,6 +44,15 @@ export async function GET(request: Request) {
         clientId: stored?.clientId ?? null,
         reason: stored?.reason ?? '',
       };
+    });
+
+    const processedCount = processedEvents.filter((e) => Boolean(e.category)).length;
+
+    await recordSyncActivity({
+      target: email.toLowerCase(),
+      eventsFetched: rawEvents.length,
+      eventsProcessed: processedCount,
+      message: `Synced ${rawEvents.length} events for ${email.toLowerCase()} (${processedCount} categorized)`,
     });
 
     return NextResponse.json(processedEvents);
