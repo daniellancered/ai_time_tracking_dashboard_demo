@@ -24,12 +24,14 @@ type EventTableProps = {
   initialEvents: ProcessedEvent[];
   companies: Company[];
   isLoading?: boolean;
+  onEventsChange?: (events: ProcessedEvent[]) => void;
 };
 
 export default function EventTable({
   initialEvents,
   companies,
   isLoading = false,
+  onEventsChange,
 }: EventTableProps) {
   const [events, setEvents] = useState<ProcessedEvent[]>(initialEvents);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -62,6 +64,7 @@ export default function EventTable({
       const data = await res.json();
       if (data.items) {
         setEvents(data.items);
+        onEventsChange?.(data.items);
       }
     } catch (err) {
       console.error('Error categorizing events:', err);
