@@ -1,16 +1,13 @@
 import { useState, useEffect } from 'react';
-import type { CalendarEvent, Company, ProcessedEvent } from '@/types';
-import { processEvent } from '@/utils';
+import type { ProcessedEvent } from '@/types';
 
 export type UseEmployeeCalendarOptions = {
   email?: string;
-  companies?: Company[];
   initialError?: string | null;
 };
 
 export default function useEmployeeCalendar({
   email,
-  companies = [],
   initialError = null,
 }: UseEmployeeCalendarOptions) {
   const [events, setEvents] = useState<ProcessedEvent[]>([]);
@@ -37,9 +34,9 @@ export default function useEmployeeCalendar({
           throw new Error('Failed to load calendar events for the selected employee');
         }
 
-        const data: CalendarEvent[] = await res.json();
+        const data: ProcessedEvent[] = await res.json();
         if (isMounted) {
-          setEvents(data.map((event) => processEvent(event, companies)));
+          setEvents(data);
         }
       } catch (err) {
         if (isMounted) {
@@ -58,7 +55,7 @@ export default function useEmployeeCalendar({
     return () => {
       isMounted = false;
     };
-  }, [email, companies]);
+  }, [email]);
 
   return {
     events,

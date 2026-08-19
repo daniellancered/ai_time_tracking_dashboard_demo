@@ -1,4 +1,5 @@
 import type { CalendarEvent, Company, Employee, ResourceType } from '@/types';
+import { calculateDuration } from '@/utils/formatters';
 
 type QueryParams = Record<string, string | number | boolean | undefined | null>;
 
@@ -61,5 +62,9 @@ export async function fetchEvents(params: {
     throw new Error('Events query requires at least one filter: creator or attendee email.');
   }
   const data = await fetchFromResources<ApiResponse<CalendarEvent>>('events', params);
-  return data.items || [];
+  const items = data.items || [];
+  return items.map((event) => ({
+    ...event,
+    minutesDuration: calculateDuration(event.start?.dateTime, event.end?.dateTime),
+  }));
 }

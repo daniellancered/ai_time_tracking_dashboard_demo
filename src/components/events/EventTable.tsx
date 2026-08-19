@@ -233,7 +233,7 @@ export default function EventTable({
                       <td className="py-3 px-4 whitespace-nowrap font-mono font-medium text-dark">
                         <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3 text-muted" />
-                          <span>{formatDuration(ev.minutesDuration)}</span>
+                          <span>{formatDuration(ev.event.minutesDuration)}</span>
                         </div>
                       </td>
 

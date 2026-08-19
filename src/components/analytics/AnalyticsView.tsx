@@ -40,7 +40,6 @@ export default function AnalyticsView({
 
   const { events, isLoading, errorMsg } = useEmployeeCalendar({
     email: currentEmployee?.email,
-    companies,
     initialError: initialErrorMsg,
   });
 
@@ -51,15 +50,15 @@ export default function AnalyticsView({
     const clientMap = new Map<string, number>();
 
     for (const ev of events) {
-      totalMinutes += ev.minutesDuration;
+      totalMinutes += ev.event.minutesDuration;
 
       if (ev.clientName) {
-        clientMinutes += ev.minutesDuration;
-        clientMap.set(ev.clientName, (clientMap.get(ev.clientName) || 0) + ev.minutesDuration);
+        clientMinutes += ev.event.minutesDuration;
+        clientMap.set(ev.clientName, (clientMap.get(ev.clientName) || 0) + ev.event.minutesDuration);
       }
 
       if (ev.category) {
-        categoryMap.set(ev.category, (categoryMap.get(ev.category) || 0) + ev.minutesDuration);
+        categoryMap.set(ev.category, (categoryMap.get(ev.category) || 0) + ev.event.minutesDuration);
       }
     }
 

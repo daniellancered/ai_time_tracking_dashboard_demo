@@ -20,12 +20,12 @@ export default function OverviewBreakdown({
     let totalMinutes = 0;
     const map = new Map<string, { minutes: number; count: number }>();
 
-    for (const ev of events) {
-      totalMinutes += ev.minutesDuration;
-      const key = ev.category || 'Uncategorized';
+    for (const event of events) {
+      totalMinutes += event.event.minutesDuration;
+      const key = event.category || 'Uncategorized';
       const existing = map.get(key) || { minutes: 0, count: 0 };
       map.set(key, {
-        minutes: existing.minutes + ev.minutesDuration,
+        minutes: existing.minutes + event.event.minutesDuration,
         count: existing.count + 1,
       });
     }
@@ -53,20 +53,20 @@ export default function OverviewBreakdown({
     let totalMinutes = 0;
     const map = new Map<string, { minutes: number; count: number; company?: Company }>();
 
-    for (const ev of events) {
-      totalMinutes += ev.minutesDuration;
-      const key = ev.clientName || 'Internal / Non-Client';
+    for (const event of events) {
+      totalMinutes += event.event.minutesDuration;
+      const key = event.clientName || 'Internal / Non-Client';
       const existing = map.get(key) || { minutes: 0, count: 0 };
 
       let matchedCompany: Company | undefined = existing.company;
-      if (!matchedCompany && ev.clientName) {
+      if (!matchedCompany && event.clientName) {
         matchedCompany = companies.find(
-          (c) => c.name.toLowerCase() === ev.clientName?.toLowerCase(),
+          (c) => c.name.toLowerCase() === event.clientName?.toLowerCase(),
         );
       }
 
       map.set(key, {
-        minutes: existing.minutes + ev.minutesDuration,
+        minutes: existing.minutes + event.event.minutesDuration,
         count: existing.count + 1,
         company: matchedCompany,
       });

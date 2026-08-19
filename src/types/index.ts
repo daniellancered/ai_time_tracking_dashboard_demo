@@ -41,6 +41,7 @@ export type CalendarEvent = {
     dateTime: string;
   };
   attendees?: EventAttendee[];
+  minutesDuration: number;
 };
 
 export type ProcessedEvent = {
@@ -48,7 +49,6 @@ export type ProcessedEvent = {
   category: EventCategory | null;
   clientName: string | null;
   clientId: string | null;
-  minutesDuration: number;
   reason?: string;
 };
 
@@ -67,10 +67,4 @@ export type AIProxyResponsePayload<TOutput = Record<string, unknown>> = {
   parsed_output?: TOutput;
   raw_content?: string;
   error?: string;
-};
-
-export type AICategorizationOutput = {
-  category: EventCategory;
-  client_name: string | null;
-  reason: string;
 };

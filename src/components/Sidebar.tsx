@@ -9,7 +9,6 @@ import {
   Building2,
   CalendarDays,
   BarChart3,
-  Settings,
   Clock,
   ChevronLeft,
   ChevronRight,
@@ -40,11 +39,6 @@ const NAV_ITEMS = [
     name: 'Analytics',
     href: '/analytics',
     icon: BarChart3,
-  },
-  {
-    name: 'Settings',
-    href: '/settings',
-    icon: Settings,
   },
 ];
 

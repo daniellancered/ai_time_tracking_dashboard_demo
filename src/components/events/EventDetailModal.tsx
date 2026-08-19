@@ -98,7 +98,7 @@ export default function EventDetailModal({ event, onClose }: EventDetailModalPro
                 <span>Duration</span>
               </div>
               <div className="font-semibold text-dark text-xs">
-                {formatDuration(event.minutesDuration)}
+                {formatDuration(rawEvent.minutesDuration)}
               </div>
             </div>
           </div>

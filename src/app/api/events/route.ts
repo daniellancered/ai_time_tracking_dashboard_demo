@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { fetchEvents } from '@/lib/api/resources';
+import { getStoredCategorizations } from '@/lib/storage';
+import type { ProcessedEvent } from '@/types';
 
 export async function GET(request: Request) {
   try {
@@ -19,7 +21,20 @@ export async function GET(request: Request) {
       attendee: attendee || undefined,
     });
 
-    return NextResponse.json(events);
+    const storedCategorizations = await getStoredCategorizations();
+
+    const processedEvents: ProcessedEvent[] = events.map((event) => {
+      const stored = storedCategorizations[event.id];
+      return {
+        event,
+        category: stored?.category ?? null,
+        clientName: stored?.clientName ?? null,
+        clientId: stored?.clientId ?? null,
+        reason: stored?.reason ?? '',
+      };
+    });
+
+    return NextResponse.json(processedEvents);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to fetch calendar events';
     return NextResponse.json({ error: message }, { status: 500 });

@@ -66,7 +66,7 @@ export default function DayEventsModal({ dayData, onClose, onSelectEvent }: DayE
                   <div className="text-[11px] text-light flex items-center gap-2">
                     <span className="font-mono">{formatDateTime(ev.event.start?.dateTime)}</span>
                     <span>•</span>
-                    <span>{formatDuration(ev.minutesDuration)}</span>
+                    <span>{formatDuration(ev.event.minutesDuration)}</span>
                   </div>
                   <div className="flex items-center gap-1.5 pt-0.5">
                     <span
