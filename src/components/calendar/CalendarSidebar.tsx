@@ -42,6 +42,25 @@ export default function CalendarSidebar({
       </div>
 
       <div className="space-y-1 max-h-[520px] overflow-y-auto pr-0.5 divide-y divide-border/60">
+        <button
+          type="button"
+          onClick={() => onSelectEmployee('all')}
+          disabled={isLoading}
+          className={`w-full text-left p-2.5 rounded transition-colors flex items-center gap-2.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+            selectedEmployeeId === 'all'
+              ? 'bg-primary/10 border-primary/30 text-primary font-semibold'
+              : 'hover:bg-surface-hover text-dark'
+          }`}
+        >
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-xs shrink-0">
+            <Users className="h-4 w-4" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs truncate font-semibold">All Team Members</div>
+            <div className="text-[10px] text-light truncate">Combined Organization Calendar</div>
+          </div>
+        </button>
+
         {employees.map((emp) => {
           const isSelected = emp.id === selectedEmployeeId;
           const initials = getInitials(emp.name);

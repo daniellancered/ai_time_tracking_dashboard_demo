@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CalendarRange, RefreshCw } from 'lucide-react';
+import { CalendarRange, RefreshCw, Users } from 'lucide-react';
 import type { Employee } from '@/types';
 import { getInitials, getRoleBadgeStyle, type DateRangePreset } from '@/utils';
 
@@ -34,14 +34,17 @@ export default function EmployeeFilterBanner({
 }: EmployeeFilterBannerProps) {
   if (!currentEmployee) return null;
 
-  const initials = getInitials(currentEmployee.name);
-  const roleStyle = getRoleBadgeStyle(currentEmployee.role);
+  const isAll = selectedEmployeeId === 'all';
+  const initials = isAll ? 'ALL' : getInitials(currentEmployee.name);
+  const roleStyle = isAll
+    ? 'border-primary/20 bg-primary/10 text-primary'
+    : getRoleBadgeStyle(currentEmployee.role);
 
   return (
     <div className="rounded-lg border border-border bg-surface p-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3">
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm shrink-0 border border-primary/20">
-          {initials}
+          {isAll ? <Users className="h-4 w-4" /> : initials}
         </div>
         <div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -49,10 +52,12 @@ export default function EmployeeFilterBanner({
             <span
               className={`inline-flex items-center rounded border px-2 py-0.2 text-[10px] font-semibold ${roleStyle}`}
             >
-              {currentEmployee.role}
+              {isAll ? `All Team Members (${employees.length})` : currentEmployee.role}
             </span>
           </div>
-          <div className="text-[11px] text-light font-mono">{currentEmployee.email}</div>
+          <div className="text-[11px] text-light font-mono">
+            {isAll ? 'All Team Calendars Aggregated' : currentEmployee.email}
+          </div>
         </div>
       </div>
 
@@ -64,11 +69,14 @@ export default function EmployeeFilterBanner({
             disabled={isLoading}
             className="h-8 px-2.5 rounded border border-border bg-surface text-xs text-dark font-medium focus:outline-none focus:border-primary transition-colors cursor-pointer min-w-[170px] disabled:opacity-60"
           >
-            {employees.map((emp) => (
-              <option key={emp.id} value={emp.id}>
-                {emp.name} ({emp.role})
-              </option>
-            ))}
+            <option value="all">👥 All Employees (Overview)</option>
+            <optgroup label="Individual Team Members">
+              {employees.map((emp) => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.name} ({emp.role})
+                </option>
+              ))}
+            </optgroup>
           </select>
           {isLoading && (
             <RefreshCw className="absolute right-7 top-1/2 -translate-y-1/2 h-3.5 w-3.5 animate-spin text-primary pointer-events-none" />

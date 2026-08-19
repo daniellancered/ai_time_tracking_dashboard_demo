@@ -28,7 +28,15 @@ export default function CalendarView({ employees }: CalendarViewProps) {
 
   const [currentDate, setCurrentDate] = useState(() => new Date());
 
-  const currentEmployee = employees.find((emp) => emp.id === selectedEmployeeId) || employees[0];
+  const currentEmployee: Employee =
+    selectedEmployeeId === 'all'
+      ? {
+          id: 'all',
+          name: 'All Employees',
+          email: 'all',
+          role: 'Organization Overview',
+        }
+      : employees.find((emp) => emp.id === selectedEmployeeId) || employees[0];
 
   const filteredEmployees = useMemo(() => {
     const q = searchEmployeeQuery.toLowerCase();
@@ -39,7 +47,7 @@ export default function CalendarView({ employees }: CalendarViewProps) {
   }, [employees, searchEmployeeQuery]);
 
   const { events, isLoading, errorMsg } = useEmployeeCalendar({
-    email: currentEmployee?.email,
+    email: selectedEmployeeId === 'all' ? 'all' : currentEmployee?.email,
   });
 
   useEffect(() => {

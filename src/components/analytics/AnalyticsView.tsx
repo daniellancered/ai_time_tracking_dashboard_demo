@@ -33,10 +33,18 @@ export default function AnalyticsView({
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
 
-  const currentEmployee = employees.find((emp) => emp.id === selectedEmployeeId) || employees[0];
+  const currentEmployee: Employee =
+    selectedEmployeeId === 'all'
+      ? {
+          id: 'all',
+          name: 'All Employees',
+          email: 'all@smartly.io',
+          role: 'Organization Overview',
+        }
+      : employees.find((emp) => emp.id === selectedEmployeeId) || employees[0];
 
   const { events, setEvents, isLoading, errorMsg, refreshEvents } = useEmployeeCalendar({
-    email: currentEmployee?.email,
+    email: selectedEmployeeId === 'all' ? 'all' : currentEmployee?.email,
     initialError: initialErrorMsg,
   });
 
@@ -80,7 +88,9 @@ export default function AnalyticsView({
   }, [filteredEvents]);
 
   const handleExportCSV = () => {
-    if (currentEmployee) {
+    if (selectedEmployeeId === 'all') {
+      exportEventsToCSV(filteredEvents, 'all_employees');
+    } else if (currentEmployee) {
       exportEventsToCSV(filteredEvents, currentEmployee.name);
     }
   };
