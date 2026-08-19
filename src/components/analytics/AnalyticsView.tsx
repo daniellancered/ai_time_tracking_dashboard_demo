@@ -38,7 +38,7 @@ export default function AnalyticsView({
   const initials = currentEmployee ? getInitials(currentEmployee.name) : '??';
   const roleStyle = currentEmployee ? getRoleBadgeStyle(currentEmployee.role) : '';
 
-  const { events, setEvents, isLoading, errorMsg } = useEmployeeCalendar({
+  const { events, setEvents, isLoading, errorMsg, refreshEvents } = useEmployeeCalendar({
     email: currentEmployee?.email,
     initialError: initialErrorMsg,
   });
@@ -260,6 +260,7 @@ export default function AnalyticsView({
           companies={companies}
           isLoading={isLoading}
           onEventsChange={setEvents}
+          onRefresh={refreshEvents}
         />
       </div>
     </div>

@@ -25,6 +25,7 @@ type EventTableProps = {
   companies: Company[];
   isLoading?: boolean;
   onEventsChange?: (events: ProcessedEvent[]) => void;
+  onRefresh?: () => void | Promise<void>;
 };
 
 export default function EventTable({
@@ -32,6 +33,7 @@ export default function EventTable({
   companies,
   isLoading = false,
   onEventsChange,
+  onRefresh,
 }: EventTableProps) {
   const [events, setEvents] = useState<ProcessedEvent[]>(initialEvents);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -39,6 +41,12 @@ export default function EventTable({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [isCategorizing, setIsCategorizing] = useState<boolean>(false);
   const [selectedEvent, setSelectedEvent] = useState<ProcessedEvent | null>(null);
+
+  const uncategorizedCount = useMemo(() => {
+    return events.filter((ev) => !ev.category).length;
+  }, [events]);
+
+  const hasUncategorizedEvents = uncategorizedCount > 0;
 
   useEffect(() => {
     setEvents(initialEvents);
@@ -51,11 +59,14 @@ export default function EventTable({
   const handleBatchCategorize = async () => {
     try {
       setIsCategorizing(true);
+      const uncategorized = events.filter((e) => !e.category);
+      const targetEvents = uncategorized.length > 0 ? uncategorized : events;
+
       const res = await fetch('/api/categorize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          events: events.map((data) => data.event),
+          events: targetEvents.map((data) => data.event),
           companies,
         }),
       });
@@ -63,8 +74,15 @@ export default function EventTable({
       if (!res.ok) throw new Error('AI Categorization request failed');
       const data = await res.json();
       if (data.items) {
-        setEvents(data.items);
-        onEventsChange?.(data.items);
+        const updatedMap = new Map<string, ProcessedEvent>();
+        for (const item of data.items) {
+          if (item.event?.id) {
+            updatedMap.set(item.event.id, item);
+          }
+        }
+        const merged = events.map((ev) => updatedMap.get(ev.event.id) || ev);
+        setEvents(merged);
+        onEventsChange?.(merged);
       }
     } catch (err) {
       console.error('Error categorizing events:', err);
@@ -130,25 +148,40 @@ export default function EventTable({
           </select>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
-          <button
-            type="button"
-            onClick={handleBatchCategorize}
-            disabled={isCategorizing || isLoading || events.length === 0}
-            className="inline-flex items-center gap-1.5 rounded bg-primary px-3.5 py-2 text-xs font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50 cursor-pointer"
-          >
-            {isCategorizing ? (
-              <>
-                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                <span>AI is working...</span>
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-3.5 w-3.5" />
-                <span>Categorize with AI</span>
-              </>
-            )}
-          </button>
+        <div className="flex items-center gap-2.5 shrink-0">
+          {onRefresh && (
+            <button
+              type="button"
+              onClick={onRefresh}
+              disabled={isLoading || isCategorizing}
+              className="inline-flex items-center gap-1.5 rounded border border-border bg-surface px-3 py-2 text-xs font-medium text-dark hover:bg-surface-hover transition-colors disabled:opacity-50 cursor-pointer"
+              title="Fetch latest events from Google Calendar"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin text-primary' : 'text-light'}`} />
+              <span>Fetch Latest Events</span>
+            </button>
+          )}
+
+          {hasUncategorizedEvents && (
+            <button
+              type="button"
+              onClick={handleBatchCategorize}
+              disabled={isCategorizing || isLoading || events.length === 0}
+              className="inline-flex items-center gap-1.5 rounded bg-primary px-3.5 py-2 text-xs font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50 cursor-pointer shadow-xs"
+            >
+              {isCategorizing ? (
+                <>
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                  <span>AI is categorizing...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>Categorize with AI ({uncategorizedCount})</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
 
