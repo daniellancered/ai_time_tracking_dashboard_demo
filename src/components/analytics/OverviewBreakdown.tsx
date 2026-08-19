@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Tag, Building2, HelpCircle } from 'lucide-react';
+import { Tag, Building2, HelpCircle, Sparkles } from 'lucide-react';
 import type { ProcessedEvent, Company, EventCategory } from '@/types';
 import { getCategoryBadgeStyle, getCustomerTierBadgeStyle } from '@/utils';
 
@@ -16,6 +16,10 @@ export default function OverviewBreakdown({
   companies,
   isLoading = false,
 }: OverviewBreakdownProps) {
+  const hasCategorizedEvents = useMemo(() => {
+    return events.some((ev) => Boolean(ev.category));
+  }, [events]);
+
   const categoryStats = useMemo(() => {
     let totalMinutes = 0;
     const map = new Map<string, { minutes: number; count: number }>();
@@ -55,7 +59,16 @@ export default function OverviewBreakdown({
 
     for (const event of events) {
       totalMinutes += event.event.minutesDuration;
-      const key = event.clientName || 'Internal / Non-Client';
+
+      let key: string;
+      if (event.clientName) {
+        key = event.clientName;
+      } else if (event.category) {
+        key = 'Internal / Non-Client';
+      } else {
+        key = 'Uncategorized / Pending AI';
+      }
+
       const existing = map.get(key) || { minutes: 0, count: 0 };
 
       let matchedCompany: Company | undefined = existing.company;
@@ -82,6 +95,7 @@ export default function OverviewBreakdown({
         percentage,
         company: data.company,
         isInternal: clientName === 'Internal / Non-Client',
+        isUncategorized: clientName === 'Uncategorized / Pending AI',
       };
     });
 
@@ -178,7 +192,9 @@ export default function OverviewBreakdown({
               <span>Time by Client Account</span>
             </div>
             <span className="text-xs text-light font-medium">
-              {clientStats.items.filter((i) => !i.isInternal).length} clients attributed
+              {hasCategorizedEvents
+                ? `${clientStats.items.filter((i) => !i.isInternal && !i.isUncategorized).length} clients attributed`
+                : 'Pending AI categorization'}
             </span>
           </div>
 
@@ -193,6 +209,16 @@ export default function OverviewBreakdown({
                   <div className="h-2 bg-slate-100 rounded w-full" />
                 </div>
               ))}
+            </div>
+          ) : !hasCategorizedEvents && events.length > 0 ? (
+            <div className="py-8 text-center text-xs text-light flex flex-col items-center justify-center gap-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary/10 text-secondary mb-1">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div className="font-semibold text-dark text-sm">Client Attribution Not Available</div>
+              <p className="max-w-xs text-light leading-relaxed text-[11px]">
+                Events for this employee have not been processed with AI yet. Click <strong>Auto Categorize with AI</strong> in the meeting log below to detect client accounts and time allocation.
+              </p>
             </div>
           ) : clientStats.items.length > 0 ? (
             <div className="space-y-3.5 max-h-72 overflow-y-auto pr-1">
@@ -228,7 +254,11 @@ export default function OverviewBreakdown({
                     <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all duration-300 ${
-                          item.isInternal ? 'bg-slate-400' : 'bg-secondary'
+                          item.isUncategorized
+                            ? 'bg-amber-400'
+                            : item.isInternal
+                              ? 'bg-slate-400'
+                              : 'bg-secondary'
                         }`}
                         style={{ width: `${Math.max(item.percentage, 3)}%` }}
                       />

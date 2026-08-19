@@ -46,22 +46,25 @@ export default function AnalyticsView({
   const metrics = useMemo(() => {
     let totalMinutes = 0;
     let clientMinutes = 0;
+    let categorizedCount = 0;
     const categoryMap = new Map<string, number>();
     const clientMap = new Map<string, number>();
 
     for (const ev of events) {
       totalMinutes += ev.event.minutesDuration;
 
+      if (ev.category) {
+        categorizedCount++;
+        categoryMap.set(ev.category, (categoryMap.get(ev.category) || 0) + ev.event.minutesDuration);
+      }
+
       if (ev.clientName) {
         clientMinutes += ev.event.minutesDuration;
         clientMap.set(ev.clientName, (clientMap.get(ev.clientName) || 0) + ev.event.minutesDuration);
       }
-
-      if (ev.category) {
-        categoryMap.set(ev.category, (categoryMap.get(ev.category) || 0) + ev.event.minutesDuration);
-      }
     }
 
+    const hasCategorized = categorizedCount > 0;
     const totalHours = Math.round((totalMinutes / 60) * 10) / 10;
     const clientHours = Math.round((clientMinutes / 60) * 10) / 10;
     const clientPercentage =
@@ -89,6 +92,7 @@ export default function AnalyticsView({
       totalHours,
       clientHours,
       clientPercentage,
+      hasCategorized,
       topCategory,
       topCategoryHours: Math.round((maxCatMinutes / 60) * 10) / 10,
       topClient,
@@ -206,10 +210,20 @@ export default function AnalyticsView({
             </div>
           </div>
           <div className="mt-2 text-2xl font-bold text-secondary">
-            {metrics.clientPercentage}%{' '}
-            <span className="text-sm font-medium text-light">({metrics.clientHours} hrs)</span>
+            {metrics.hasCategorized ? (
+              <>
+                {metrics.clientPercentage}%{' '}
+                <span className="text-sm font-medium text-light">({metrics.clientHours} hrs)</span>
+              </>
+            ) : (
+              <span className="text-xl font-bold text-light">—</span>
+            )}
           </div>
-          <div className="text-[11px] text-light mt-1">Client-facing meetings & work</div>
+          <div className="text-[11px] text-light mt-1">
+            {metrics.hasCategorized
+              ? 'Client-facing meetings & work'
+              : 'Pending AI categorization'}
+          </div>
         </div>
 
         <div className="rounded-lg border border-border bg-surface p-4">
@@ -220,10 +234,14 @@ export default function AnalyticsView({
             </div>
           </div>
           <div className="mt-2 text-base font-bold text-dark truncate" title={metrics.topClient}>
-            {metrics.topClient}
+            {metrics.hasCategorized ? metrics.topClient : '—'}
           </div>
           <div className="text-[11px] text-light mt-1">
-            {metrics.topClientHours > 0 ? `${metrics.topClientHours} hrs logged` : 'No client time'}
+            {!metrics.hasCategorized
+              ? 'Pending AI categorization'
+              : metrics.topClientHours > 0
+                ? `${metrics.topClientHours} hrs logged`
+                : 'No client time'}
           </div>
         </div>
 
@@ -235,12 +253,12 @@ export default function AnalyticsView({
             </div>
           </div>
           <div className="mt-2 text-base font-bold text-dark truncate" title={metrics.topCategory}>
-            {metrics.topCategory}
+            {metrics.hasCategorized ? metrics.topCategory : '—'}
           </div>
           <div className="text-[11px] text-light mt-1">
-            {metrics.topCategoryHours > 0
+            {metrics.hasCategorized && metrics.topCategoryHours > 0
               ? `${metrics.topCategoryHours} hrs logged`
-              : 'Uncategorized'}
+              : 'Pending AI categorization'}
           </div>
         </div>
       </div>
