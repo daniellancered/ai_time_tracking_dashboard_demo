@@ -20,7 +20,7 @@ export default function useEmployeeCalendar({
       return;
     }
 
-    const creator = email;
+    const employeeEmail = email;
     let isMounted = true;
 
     async function loadEvents() {
@@ -29,7 +29,7 @@ export default function useEmployeeCalendar({
         setEvents([]);
         setErrorMsg(null);
 
-        const res = await fetch(`/api/events?creator=${encodeURIComponent(creator)}`);
+        const res = await fetch(`/api/events?email=${encodeURIComponent(employeeEmail)}`);
         if (!res.ok) {
           throw new Error('Failed to load calendar events for the selected employee');
         }

@@ -1,29 +1,42 @@
 import { NextResponse } from 'next/server';
 import { fetchEvents } from '@/lib/api/resources';
 import { getStoredCategorizations } from '@/lib/storage';
-import type { ProcessedEvent } from '@/types';
+import type { CalendarEvent, ProcessedEvent } from '@/types';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const creator = searchParams.get('creator');
-    const attendee = searchParams.get('attendee');
+    const email = searchParams.get('email');
 
-    if (!creator && !attendee) {
+    if (!email) {
       return NextResponse.json(
-        { error: 'Missing creator or attendee query parameter.' },
+        { error: 'Missing email query parameter.' },
         { status: 400 },
       );
     }
 
-    const events = await fetchEvents({
-      creator: creator || undefined,
-      attendee: attendee || undefined,
+    const [created, attended] = await Promise.all([
+      fetchEvents({ creator: email }).catch(() => []),
+      fetchEvents({ attendee: email }).catch(() => []),
+    ]);
+
+    const eventMap = new Map<string, CalendarEvent>();
+    for (const ev of [...created, ...attended]) {
+      if (ev.id && !eventMap.has(ev.id)) {
+        eventMap.set(ev.id, ev);
+      }
+    }
+    const rawEvents = Array.from(eventMap.values());
+
+    rawEvents.sort((a, b) => {
+      const timeA = new Date(a.start?.dateTime || 0).getTime();
+      const timeB = new Date(b.start?.dateTime || 0).getTime();
+      return timeA - timeB;
     });
 
     const storedCategorizations = await getStoredCategorizations();
 
-    const processedEvents: ProcessedEvent[] = events.map((event) => {
+    const processedEvents: ProcessedEvent[] = rawEvents.map((event) => {
       const stored = storedCategorizations[event.id];
       return {
         event,

@@ -32,7 +32,13 @@ async function fetchFromResources<T>(resource: ResourceType, params: QueryParams
     headers: {
       Accept: 'application/json',
     },
-    next: { revalidate: 60 },
+    next: {
+      revalidate: 3600,
+      tags: [
+        resource,
+        ...Object.values(params).filter((v): v is string => typeof v === 'string'),
+      ],
+    },
   });
 
   if (!response.ok) {
