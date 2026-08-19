@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Search, Calendar, Briefcase, Mail } from 'lucide-react';
+import { Search, BarChart3, Briefcase, Mail } from 'lucide-react';
 import type { Employee } from '@/types';
 import { getInitials, getRoleBadgeStyle } from '@/utils';
 
@@ -108,11 +108,11 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
 
                       <td className="py-3 px-4 text-right">
                         <Link
-                          href={`/events?email=${encodeURIComponent(emp.email)}`}
+                          href={`/analytics?id=${encodeURIComponent(emp.id)}`}
                           className="inline-flex items-center gap-1 font-medium text-secondary hover:underline"
                         >
-                          <Calendar className="h-3.5 w-3.5" />
-                          View Events →
+                          <BarChart3 className="h-3.5 w-3.5" />
+                          View Analytics →
                         </Link>
                       </td>
                     </tr>
