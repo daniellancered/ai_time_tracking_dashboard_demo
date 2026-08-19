@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { Tag, Building2, HelpCircle, Sparkles, BarChart3, PieChart } from 'lucide-react';
 import type { ProcessedEvent, Company, EventCategory } from '@/types';
+import { CATEGORY_COLORS, CLIENT_COLORS } from '@/constants';
 import { getCategoryBadgeStyle, getCustomerTierBadgeStyle } from '@/utils';
 
 type TimeBreakdownProps = {
@@ -10,36 +11,6 @@ type TimeBreakdownProps = {
   companies: Company[];
   isLoading?: boolean;
 };
-
-const CATEGORY_COLORS = [
-  '#6F42C1',
-  '#007BFF',
-  '#17A2B8',
-  '#00CCCC',
-  '#10B981',
-  '#F59E0B',
-  '#F43F5E',
-  '#6366F1',
-  '#8B5CF6',
-  '#EC4899',
-  '#14B8A6',
-  '#F97316',
-  '#06B6D4',
-  '#84CC16',
-  '#64748B',
-];
-
-const CLIENT_COLORS = [
-  '#007BFF',
-  '#17A2B8',
-  '#6366F1',
-  '#10B981',
-  '#F59E0B',
-  '#EC4899',
-  '#6F42C1',
-  '#14B8A6',
-  '#64748B',
-];
 
 export default function TimeBreakdown({
   events,
@@ -140,13 +111,11 @@ export default function TimeBreakdown({
     };
   }, [events, companies]);
 
-  // Donut chart math: radius = 46, circumference ≈ 289.026
   const donutRadius = 46;
   const donutCircumference = 2 * Math.PI * donutRadius;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-      {/* 1. TIME BY CATEGORY CARD */}
       <div className="rounded-lg border border-border bg-surface p-5 flex flex-col justify-between">
         <div>
           <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
@@ -157,8 +126,13 @@ export default function TimeBreakdown({
 
             <div className="flex items-center gap-2">
               <span className="text-xs text-light font-medium hidden sm:inline">
-                {categoryStats.items.length}{' '}
-                {categoryStats.items.length === 1 ? 'category' : 'categories'}
+                {isLoading ? (
+                  <span className="h-3 w-16 bg-slate-200 rounded animate-pulse inline-block" />
+                ) : (
+                  `${categoryStats.items.length} ${
+                    categoryStats.items.length === 1 ? 'category' : 'categories'
+                  }`
+                )}
               </span>
 
               <div className="flex items-center gap-0.5 p-0.5 rounded bg-surface-subtle border border-border">
@@ -339,7 +313,6 @@ export default function TimeBreakdown({
         </div>
       </div>
 
-      {/* 2. TIME BY CLIENT CARD */}
       <div className="rounded-lg border border-border bg-surface p-5 flex flex-col justify-between">
         <div>
           <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
@@ -350,9 +323,13 @@ export default function TimeBreakdown({
 
             <div className="flex items-center gap-2">
               <span className="text-xs text-light font-medium hidden sm:inline">
-                {hasCategorizedEvents
-                  ? `${clientStats.items.filter((i) => !i.isInternal && !i.isUncategorized).length} clients`
-                  : 'Pending AI'}
+                {isLoading ? (
+                  <span className="h-3 w-16 bg-slate-200 rounded animate-pulse inline-block" />
+                ) : hasCategorizedEvents ? (
+                  `${clientStats.items.filter((i) => !i.isInternal && !i.isUncategorized).length} clients`
+                ) : (
+                  'Pending'
+                )}
               </span>
 
               <div className="flex items-center gap-0.5 p-0.5 rounded bg-surface-subtle border border-border">
@@ -412,7 +389,6 @@ export default function TimeBreakdown({
               <span>No client data available.</span>
             </div>
           ) : clientView === 'bar' ? (
-            /* CLIENT BAR VIEW */
             <div className="space-y-3.5 max-h-72 overflow-y-auto pr-1">
               {clientStats.items.map((item, idx) => {
                 const tierBadge = item.company
@@ -462,7 +438,6 @@ export default function TimeBreakdown({
               })}
             </div>
           ) : (
-            /* CLIENT PIE / DONUT VIEW */
             <div className="flex flex-col sm:flex-row items-center justify-around gap-5 py-2">
               <div className="relative flex items-center justify-center shrink-0">
                 <svg

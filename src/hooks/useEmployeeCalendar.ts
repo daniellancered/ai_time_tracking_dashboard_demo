@@ -24,6 +24,7 @@ export default function useEmployeeCalendar({
       try {
         setIsLoading(true);
         setErrorMsg(null);
+        setEvents([]);
 
         const url = `/api/events?email=${encodeURIComponent(email)}${
           forceRefresh ? '&forceRefresh=true' : ''
@@ -49,6 +50,8 @@ export default function useEmployeeCalendar({
   );
 
   useEffect(() => {
+    setEvents([]);
+    setErrorMsg(null);
     loadEvents();
   }, [loadEvents]);
 

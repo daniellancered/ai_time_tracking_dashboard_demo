@@ -151,15 +151,19 @@ export default function EventTable({
             }`}
           >
             <span>Processed</span>
-            <span
-              className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                statusTab === 'processed'
-                  ? 'bg-white/20 text-white'
-                  : 'bg-emerald-50 text-emerald-700 font-medium'
-              }`}
-            >
-              {processedCount}
-            </span>
+            {isLoading ? (
+              <span className="h-3 w-4 rounded-full bg-slate-200 animate-pulse inline-block" />
+            ) : (
+              <span
+                className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                  statusTab === 'processed'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-emerald-50 text-emerald-700 font-medium'
+                }`}
+              >
+                {processedCount}
+              </span>
+            )}
           </button>
 
           <button
@@ -172,17 +176,21 @@ export default function EventTable({
             }`}
           >
             <span>Pending</span>
-            <span
-              className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                statusTab === 'pending'
-                  ? 'bg-white/20 text-white'
-                  : pendingCount > 0
-                    ? 'bg-amber-100 text-amber-800 animate-pulse'
-                    : 'bg-slate-100 text-light font-normal'
-              }`}
-            >
-              {pendingCount}
-            </span>
+            {isLoading ? (
+              <span className="h-3 w-4 rounded-full bg-slate-200 animate-pulse inline-block" />
+            ) : (
+              <span
+                className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                  statusTab === 'pending'
+                    ? 'bg-white/20 text-white'
+                    : pendingCount > 0
+                      ? 'bg-amber-100 text-amber-800 animate-pulse'
+                      : 'bg-slate-100 text-light font-normal'
+                }`}
+              >
+                {pendingCount}
+              </span>
+            )}
           </button>
         </div>
 
