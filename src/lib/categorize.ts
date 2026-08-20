@@ -20,7 +20,7 @@ async function categorizeChunk(
   companies: Company[],
 ): Promise<ProcessedEvent[]> {
   const prompt = `You are an AI assistant for a team that works with clients.
-    Your task is to categorize a batch of ${events.length} Google Calendar events into EXACTLY ONE of the 15 predefined categories and deduce the client name if applicable.
+    Your task is to categorize a batch of ${events.length} Calendar events into EXACTLY ONE of the 15 predefined categories and deduce the client name if applicable.
 
     Here are the 15 valid categories:
     ${ALL_CATEGORIES.map((category, i) => `${i + 1}. ${category}`).join('\n')}
@@ -43,9 +43,27 @@ async function categorizeChunk(
       )
       .join('\n\n')}
 
+
+    Categorization Guidelines:
+    1. If its Personal work block, focus time, Deep Work etc, don't mark it as PTO
+    2. If its an appointment outside work, like medical, dental etc, and doesn't mention any work, mark it as PTO
+    3. Learning: training, courses, workshops
+    4. Troubleshooting (feeds): resolving issues with data feeds/integrations that send data between systems, usually for a client.
+    5. Troubleshooting (Smartly): troubleshooting issues within Smartly.
+    6. Team/company calls: standups, all-hands, team syncs, company meetings, general updates
+    7. Other internal tasks: design work, bug bash prep, internal documentation, internal planning, implementation, deliverables, working sessions, quiet work, etc
+    8. Internal client work: Launch supports. And if it mentions any clients in the title or description, but no client participants. ex. Internal: Veloura
+    9. Strategic meetings / QBRs: (Always with clients) Long-term planning, quarterly business reviews, strategy alignment
+    10. Contract / commercial work: (Always with clients) Negotiations, proposals, legal, procurement discussions
+    11. Analysis and insights: (Always with clients) Data analysis, reporting, insights generation and NOT User research
+    12. Campaign support (beyond scope): Extra client work not covered by standard scope
+    13. Partner meetings: External partners, agencies, technology vendors, other companies
+    14. Travel & socials: Conferences, travel-related, team social events
+    15. Onboarding & Training: (Always with clients) Onboarding clients (Not applicable for internal tasks)
+
     Instructions for each event:
     1. Return a result item for EVERY event in the batch, matching its "event_id".
-    2. Choose the single best category from the 15 choices above.
+    2. Choose the single best category from the 15 choices above based on the guidelines.
     3. Deduce the client_name from attendee email domains, event title, or description. If it's an internal meeting or PTO, return null for client_name.
     4. Provide a brief reason (1-2 sentences).`;
 

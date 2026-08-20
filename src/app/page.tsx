@@ -141,7 +141,7 @@ export default function HomePage() {
               <RefreshCw className="h-4 w-4" />
             </div>
             <h3 className="font-semibold text-sm text-dark group-hover:text-amber-600 transition-colors">
-              5. Sync & Ingestion
+              5. Sync & Export
             </h3>
             <p className="mt-1 text-xs text-light">
               On-demand calendar sync, batch AI categorization, and cache controls.
