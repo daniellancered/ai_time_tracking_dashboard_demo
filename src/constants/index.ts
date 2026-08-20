@@ -1,4 +1,4 @@
-export const ALL_CATEGORIES = [
+export const CLIENT_WORK_CATEGORIES = [
   'Client-facing meetings and comms',
   'Strategic meetings / QBRs',
   'Contract / commercial work',
@@ -10,10 +10,20 @@ export const ALL_CATEGORIES = [
   'Travel & socials',
   'Troubleshooting (feeds)',
   'Troubleshooting (Smartly)',
+] as const;
+
+export const INTERNAL_WORK_CATEGORIES = [
   'Learning',
   'Team/company calls',
   'Other internal tasks',
-  'PTO',
+] as const;
+
+export const PTO_CATEGORIES = ['PTO'] as const;
+
+export const ALL_CATEGORIES = [
+  ...CLIENT_WORK_CATEGORIES,
+  ...INTERNAL_WORK_CATEGORIES,
+  ...PTO_CATEGORIES,
 ] as const;
 
 export const CATEGORY_COLORS = [

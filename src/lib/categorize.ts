@@ -1,5 +1,10 @@
 import type { CalendarEvent, Company, ProcessedEvent, EventCategory } from '@/types';
-import { ALL_CATEGORIES } from '@/constants';
+import {
+  ALL_CATEGORIES,
+  CLIENT_WORK_CATEGORIES,
+  INTERNAL_WORK_CATEGORIES,
+  PTO_CATEGORIES,
+} from '@/constants';
 import { callAIProxy } from './api/ai-proxy';
 
 type AIBatchEventResult = {
@@ -22,13 +27,21 @@ async function categorizeChunk(
   const prompt = `You are an AI assistant for a team that works with clients.
     Your task is to categorize a batch of ${events.length} Calendar events into EXACTLY ONE of the 15 predefined categories and deduce the client name if applicable.
 
-    Here are the 15 valid categories:
-    ${ALL_CATEGORIES.map((category, i) => `${i + 1}. ${category}`).join('\n')}
+    --- VALID CATEGORIES & TAXONOMY ---
 
-    Known Client Accounts:
-    ${companies.map((company) => `- ${company.name}`).join('\n')}
+    [CLIENT WORK CATEGORIES]
+    ${CLIENT_WORK_CATEGORIES.map((c, i) => `${i + 1}. ${c}`).join('\n')}
 
-    Events to Categorize:
+    [INTERNAL WORK CATEGORIES]
+    ${INTERNAL_WORK_CATEGORIES.map((c, i) => `${i + 1}. ${c}`).join('\n')}
+
+    [TIME OFF CATEGORY]
+    ${PTO_CATEGORIES.map((c, i) => `${i + 1}. ${c}`).join('\n')}
+
+    --- KNOWN CLIENT ACCOUNTS ---
+    ${companies.map((company) => `- ${company.name} (${company.email_domain || 'no domain'})`).join('\n')}
+
+    --- EVENTS TO CATEGORIZE ---
     ${events
       .map(
         (event, idx) => `---
@@ -43,28 +56,37 @@ async function categorizeChunk(
       )
       .join('\n\n')}
 
+    --- CATEGORIZATION GUIDELINES ---
+    1. Client Work:
+       - Standing syncs, touchpoints, regular client calls with external attendees.
+       - Strategic meetings / QBRs: (Always with clients) Long-term planning, quarterly business reviews, roadmap alignment.
+       - Contract / commercial work: (Always with clients) Negotiations, proposals, commercial terms, SOW alignment, legal/procurement.
+       - Onboarding and training: (Always with clients) Onboarding client teams, sandbox walkthroughs, training new client marketers (NOT internal training).
+       - Analysis and insights: (Always with clients) Client data analysis, performance reports, ROI deep-dives, audience insights (NOT internal user research).
+       - Campaign support (beyond scope): Extra client work, urgent campaign execution, or launch support not covered by standard scope.
+       - Internal client work: Internal preparation, account strategy, war rooms, or launch support for a specific client when no external client attendees are on the invite (e.g., "Internal: Veloura", "Launch support — Kairo Studio").
+       - Partner meetings: External partners, vendors, agencies, joint integrations.
+       - Travel & socials: Conferences, travel-related blocks, team dinners/socials.
+       - Troubleshooting (feeds): Resolving issues with client catalog feeds, data feeds, or API mappings.
+       - Troubleshooting (Smartly): Resolving platform/UI issues within Smartly for a client.
 
-    Categorization Guidelines:
-    1. If its Personal work block, focus time, Deep Work etc, don't mark it as PTO
-    2. If its an appointment outside work, like medical, dental etc, and doesn't mention any work, mark it as PTO
-    3. Learning: training, courses, workshops
-    4. Troubleshooting (feeds): resolving issues with data feeds/integrations that send data between systems, usually for a client.
-    5. Troubleshooting (Smartly): troubleshooting issues within Smartly.
-    6. Team/company calls: standups, all-hands, team syncs, company meetings, general updates
-    7. Other internal tasks: design work, bug bash prep, internal documentation, internal planning, implementation, deliverables, working sessions, quiet work, etc
-    8. Internal client work: Launch supports. And if it mentions any clients in the title or description, but no client participants. ex. Internal: Veloura
-    9. Strategic meetings / QBRs: (Always with clients) Long-term planning, quarterly business reviews, strategy alignment
-    10. Contract / commercial work: (Always with clients) Negotiations, proposals, legal, procurement discussions
-    11. Analysis and insights: (Always with clients) Data analysis, reporting, insights generation and NOT User research
-    12. Campaign support (beyond scope): Extra client work not covered by standard scope
-    13. Partner meetings: External partners, agencies, technology vendors, other companies
-    14. Travel & socials: Conferences, travel-related, team social events
-    15. Onboarding & Training: (Always with clients) Onboarding clients (Not applicable for internal tasks)
+    2. Internal Work:
+       - Learning: Training courses, webinars, workshops, lunch & learns, internal user research readouts.
+       - Team/company calls: Standups, company all-hands, cross-functional team syncs, general company updates.
+       - Other internal tasks: Design work, bug bash prep, spec writing, internal documentation, planning, implementation, deliverables, working sessions, quiet work, personal work blocks, focus time, deep work, inbox zero.
 
-    Instructions for each event:
-    1. Return a result item for EVERY event in the batch, matching its "event_id".
-    2. Choose the single best category from the 15 choices above based on the guidelines.
-    3. Deduce the client_name from attendee email domains, event title, or description. If it's an internal meeting or PTO, return null for client_name.
+    3. Time Off:
+       - PTO: Vacation, annual leave, out of office (OOO), or medical/dental appointments outside of work that do not involve work tasks.
+
+    4. Critical Distinction Rules:
+       - Personal work blocks, focus time, and deep work must NEVER be marked as PTO; categorize them as "Other internal tasks".
+       - Medical/dental/personal appointments with no work activity should be categorized as "PTO".
+       - Internal user research or roadmap slice spikes must be categorized as "Learning" or "Other internal tasks", NOT "Analysis and insights" or "Onboarding and training".
+
+    --- INSTRUCTIONS ---
+    1. Return a result item for EVERY event in the batch, matching its exact "event_id".
+    2. Choose the single best category from the 15 choices above based on these guidelines.
+    3. Deduce the client_name from attendee email domains, event title, or description matching the Known Client Accounts list. If it's internal work or PTO, return null for client_name.
     4. Provide a brief reason (1-2 sentences).`;
 
   const response = await callAIProxy<AIBatchResponse>({

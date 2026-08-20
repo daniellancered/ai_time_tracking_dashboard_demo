@@ -11,6 +11,7 @@ import {
   LayoutGrid,
   Sparkles,
 } from 'lucide-react';
+import { CLIENT_WORK_CATEGORIES, INTERNAL_WORK_CATEGORIES } from '@/constants';
 import type { ProcessedEvent } from '@/types';
 
 type SummaryCardsProps = {
@@ -40,9 +41,16 @@ export default function SummaryCards({ events, isLoading = false }: SummaryCards
         if (ev.category === 'PTO') {
           ptoMinutes += mins;
           ptoCount++;
-        } else if (ev.clientName || ev.clientId) {
+        } else if (
+          (CLIENT_WORK_CATEGORIES as readonly string[]).includes(ev.category) ||
+          ev.clientName ||
+          ev.clientId
+        ) {
           clientMinutes += mins;
           clientCount++;
+        } else if ((INTERNAL_WORK_CATEGORIES as readonly string[]).includes(ev.category)) {
+          internalMinutes += mins;
+          internalCount++;
         } else {
           internalMinutes += mins;
           internalCount++;
