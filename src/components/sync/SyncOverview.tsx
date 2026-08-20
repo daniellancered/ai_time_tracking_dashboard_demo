@@ -1,21 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {
-  RefreshCw,
-  CalendarCheck,
-  Sparkles,
-  Database,
-  Trash2,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
-  Layers,
-  Users,
-  Download,
-} from 'lucide-react';
+import { RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
 import type { Employee, SyncMetadata } from '@/types';
-import { formatDateTime, exportEventsToCSV } from '@/utils';
+import { exportEventsToCSV } from '@/utils';
+import SyncSummaryCards from './SyncSummaryCards';
+import SyncTriggerForm from './SyncTriggerForm';
+import SyncLogsList from './SyncLogsList';
+import SyncCacheManager from './SyncCacheManager';
 
 type SyncOverviewProps = {
   employees: Employee[];
@@ -258,7 +250,11 @@ export default function SyncOverview({
   };
 
   const handleClearCache = async () => {
-    if (!window.confirm('Are you sure you want to clear all cached categorizations and reset sync metadata?')) {
+    if (
+      !window.confirm(
+        'Are you sure you want to clear all cached categorizations and reset sync metadata?',
+      )
+    ) {
       return;
     }
 
@@ -301,7 +297,8 @@ export default function SyncOverview({
             Calendar Sync & Data Export
           </h1>
           <p className="text-xs text-light mt-0.5">
-            Trigger on-demand calendar synchronization, run AI categorization pipelines, and export complete datasets.
+            Trigger on-demand calendar synchronization, run AI categorization pipelines, and export
+            complete datasets.
           </p>
         </div>
       </div>
@@ -323,299 +320,40 @@ export default function SyncOverview({
         </div>
       )}
 
-      <div className="rounded-xl border border-border bg-surface p-5 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3 mb-4">
-          <div className="flex items-center gap-2 text-dark font-semibold text-sm">
-            <CalendarCheck className="h-4 w-4 text-primary" />
-            <span>Organization Ingestion & Sync Summary</span>
-          </div>
+      <SyncSummaryCards
+        metadata={metadata}
+        isExporting={isExporting}
+        isSyncing={isSyncing}
+        isProcessingPending={isProcessingPending}
+        categorizeProgress={categorizeProgress}
+        onExportAll={handleExportAll}
+        onCategorizePending={handleCategorizePending}
+      />
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleExportAll}
-              disabled={isExporting || isSyncing}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-dark hover:bg-slate-50 transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
-              title="Fetch latest events from Google feeds and export all organization events across all employees for Google Sheets evaluation"
-            >
-              <Download className={`h-3.5 w-3.5 ${isExporting ? 'animate-bounce text-primary' : 'text-light'}`} />
-              <span>{isExporting ? 'Fetching & Exporting...' : 'Export All Events (CSV)'}</span>
-            </button>
+      <SyncTriggerForm
+        employees={employees}
+        syncTarget={syncTarget}
+        forceAICategorize={forceAICategorize}
+        isSyncing={isSyncing}
+        syncProgress={syncProgress}
+        onSyncTargetChange={setSyncTarget}
+        onForceAICategorizeChange={setForceAICategorize}
+        onStartSync={handleStartSync}
+      />
 
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                metadata.lastSyncTimestamp
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  : 'bg-slate-100 text-light border border-slate-200'
-              }`}
-            >
-              <span
-                className={`h-1.5 w-1.5 rounded-full ${
-                  metadata.lastSyncTimestamp ? 'bg-emerald-500' : 'bg-slate-400'
-                }`}
-              />
-              {metadata.lastSyncTimestamp ? 'Synced' : 'Not Synced Yet'}
-            </span>
-          </div>
-        </div>
+      <SyncLogsList
+        logs={metadata.logs || []}
+        isSyncing={isSyncing}
+        isClearingLogs={isClearingLogs}
+        onClearLogs={handleClearLogs}
+      />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-3.5 rounded-lg bg-surface-subtle border border-border">
-            <div className="flex items-center gap-1.5 text-light text-xs mb-1">
-              <Clock className="h-3.5 w-3.5 text-primary" />
-              <span>Last Sync</span>
-            </div>
-            <div className="text-sm font-bold text-dark">
-              {metadata.lastSyncTimestamp ? formatDateTime(metadata.lastSyncTimestamp) : 'Never'}
-            </div>
-            <div className="text-[11px] text-light mt-0.5">Target: {metadata.lastTarget}</div>
-          </div>
-
-          <div className="p-3.5 rounded-lg bg-surface-subtle border border-border">
-            <div className="flex items-center gap-1.5 text-light text-xs mb-1">
-              <Layers className="h-3.5 w-3.5 text-secondary" />
-              <span>Total Events Ingested</span>
-            </div>
-            <div className="text-2xl font-bold text-dark">{metadata.eventsFetched}</div>
-            <div className="text-[11px] text-light mt-0.5">Overall across team members</div>
-          </div>
-
-          <div className="p-3.5 rounded-lg bg-surface-subtle border border-border">
-            <div className="flex items-center gap-1.5 text-light text-xs mb-1">
-              <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
-              <span>Total Events Processed</span>
-            </div>
-            <div className="text-2xl font-bold text-emerald-600">{metadata.eventsProcessed}</div>
-            <div className="text-[11px] text-light mt-0.5">Categorized & stored</div>
-          </div>
-
-          <div className="p-3.5 rounded-lg bg-surface-subtle border border-border flex flex-col justify-between">
-            <div>
-              <div className="flex items-center gap-1.5 text-light text-xs mb-1">
-                <AlertCircle
-                  className={`h-3.5 w-3.5 ${
-                    Math.max(0, metadata.eventsFetched - metadata.eventsProcessed) > 0
-                      ? 'text-amber-500'
-                      : 'text-slate-400'
-                  }`}
-                />
-                <span>Unprocessed Events</span>
-              </div>
-              <div
-                className={`text-2xl font-bold ${
-                  Math.max(0, metadata.eventsFetched - metadata.eventsProcessed) > 0
-                    ? 'text-amber-600'
-                    : 'text-slate-400'
-                }`}
-              >
-                {Math.max(0, metadata.eventsFetched - metadata.eventsProcessed)}
-              </div>
-              <div className="text-[11px] text-light mt-0.5">
-                {Math.max(0, metadata.eventsFetched - metadata.eventsProcessed) > 0
-                  ? 'Awaiting AI classification'
-                  : 'All events categorized'}
-              </div>
-            </div>
-
-            {isProcessingPending && categorizeProgress ? (
-              <div className="mt-2.5 space-y-1.5">
-                <div className="flex items-center justify-between text-[10px] font-medium text-amber-700">
-                  <span className="truncate max-w-[130px]">{categorizeProgress.step}</span>
-                  <span className="font-bold shrink-0">{categorizeProgress.percent}%</span>
-                </div>
-                <div className="w-full bg-amber-200 h-2 rounded-full overflow-hidden">
-                  <div
-                    className="bg-amber-600 h-full rounded-full transition-all duration-300 ease-out"
-                    style={{ width: `${categorizeProgress.percent}%` }}
-                  />
-                </div>
-              </div>
-            ) : (
-              Math.max(0, metadata.eventsFetched - metadata.eventsProcessed) > 0 && (
-                <button
-                  type="button"
-                  onClick={handleCategorizePending}
-                  disabled={isProcessingPending || isSyncing}
-                  className="mt-2.5 inline-flex w-fit items-center gap-1.5 rounded-md bg-amber-600 hover:bg-amber-700 px-2.5 py-1 text-[11px] font-semibold text-white transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
-                  title="Run AI categorization on all pending unprocessed events"
-                >
-                  <Sparkles className="h-3 w-3" />
-                  <span>Categorize with AI</span>
-                </button>
-              )
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-border bg-surface p-5 shadow-xs space-y-5">
-        <div className="border-b border-border pb-3">
-          <h2 className="text-sm font-semibold text-dark flex items-center gap-2">
-            <RefreshCw className="h-4 w-4 text-primary" />
-            <span>Trigger Manual Synchronization</span>
-          </h2>
-          <p className="text-xs text-light mt-0.5">
-            Select the sync target scope and configure AI categorization parameters.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-4">
-          <div className="space-y-2 w-fit">
-            <label className="text-xs font-semibold text-dark flex items-center gap-1.5">
-              <Users className="h-3.5 w-3.5 text-light" />
-              <span>Sync Scope</span>
-            </label>
-            <select
-              value={syncTarget}
-              onChange={(e) => setSyncTarget(e.target.value)}
-              disabled={isSyncing}
-              className="w-full h-9 px-3 rounded-lg border border-border bg-surface text-xs text-dark font-medium focus:outline-none focus:border-primary transition-colors cursor-pointer disabled:opacity-60"
-            >
-              <option value="all">All Team Members ({employees.length} employees)</option>
-              <optgroup label="Individual Employee">
-                {employees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.name} ({emp.role})
-                  </option>
-                ))}
-              </optgroup>
-            </select>
-          </div>
-
-          <div className="space-y-2 w-fit">
-            <label className="text-xs font-semibold text-dark flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              <span>AI Processing Mode</span>
-            </label>
-            <div className="p-2.5 rounded-lg border border-border bg-surface-subtle flex items-start gap-2.5">
-              <input
-                type="checkbox"
-                id="forceAICategorize"
-                checked={forceAICategorize}
-                onChange={(e) => setForceAICategorize(e.target.checked)}
-                disabled={isSyncing}
-                className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
-              />
-              <label htmlFor="forceAICategorize" className="text-xs cursor-pointer select-none">
-                <span className="font-semibold text-dark block">Force AI Re-categorization</span>
-                <span className="text-[11px] text-light block mt-0.5">
-                  Bypasses existing cached classifications and re-runs the AI prompt on all events.
-                </span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full">
-          <button
-            type="button"
-            onClick={handleStartSync}
-            disabled={isSyncing}
-            className="inline-flex items-center shrink-0 justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-60 shadow-xs cursor-pointer h-10"
-          >
-            <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-            <span>{isSyncing ? 'Synchronizing...' : 'Start Calendar Sync'}</span>
-          </button>
-
-          {isSyncing && syncProgress && (
-            <div className="flex-1 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2 space-y-1.5 min-w-0">
-              <div className="flex items-center justify-between text-xs font-semibold text-primary">
-                <div className="flex items-center gap-2 truncate min-w-0">
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin shrink-0" />
-                  <span className="truncate">{syncProgress.step}</span>
-                </div>
-                <span className="font-mono text-xs shrink-0 pl-2">{syncProgress.percent}%</span>
-              </div>
-              <div className="w-full bg-primary/15 h-2 rounded-full overflow-hidden">
-                <div
-                  className="bg-primary h-full rounded-full transition-all duration-300 ease-out"
-                  style={{ width: `${syncProgress.percent}%` }}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-border bg-surface p-5 shadow-xs space-y-3">
-        <div className="flex items-center justify-between border-b border-border pb-3">
-          <div className="flex items-center gap-2 text-dark font-semibold text-sm">
-            <Layers className="h-4 w-4 text-primary" />
-            <span>Recent Sync Logs</span>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <span className="text-[11px] text-light font-medium">
-              {metadata.logs && metadata.logs.length > 0
-                ? `${metadata.logs.length} logged events`
-                : 'No recent logs'}
-            </span>
-            {metadata.logs && metadata.logs.length > 0 && (
-              <button
-                type="button"
-                onClick={handleClearLogs}
-                disabled={isClearingLogs || isSyncing}
-                className="text-[11px] font-medium text-light hover:text-red-600 transition-colors cursor-pointer px-2 py-0.5 rounded hover:bg-red-50 border border-border"
-                title="Clear sync activity logs"
-              >
-                {isClearingLogs ? 'Clearing...' : 'Clear Logs'}
-              </button>
-            )}
-          </div>
-        </div>
-
-        {metadata.logs && metadata.logs.length > 0 ? (
-          <div className="divide-y divide-border max-h-64 overflow-y-auto pr-1">
-            {metadata.logs.map((log) => (
-              <div key={log.id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 shrink-0">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                  </div>
-                  <div className="truncate">
-                    <div className="font-semibold text-dark truncate">{log.message}</div>
-                    <div className="text-[11px] text-light flex items-center gap-2 mt-0.5">
-                      <span>Target: {log.target}</span>
-                      <span>·</span>
-                      <span>{log.eventsFetched} events</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-[11px] text-light font-mono shrink-0">
-                  {formatDateTime(log.timestamp)}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : !isSyncing ? (
-          <div className="py-6 text-center text-xs text-light">
-            No sync activity recorded yet. Trigger a sync above or browse employee calendars to generate logs.
-          </div>
-        ) : null}
-      </div>
-
-      <div className="rounded-xl border border-border bg-surface p-5 shadow-xs flex flex-col gap-4">
-        <div className="flex items-start gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-light shrink-0">
-            <Database className="h-4 w-4" />
-          </div>
-          <div>
-            <h3 className="text-xs font-bold text-dark">Data Cache & Storage</h3>
-            <p className="text-[11px] text-light mt-0.5">
-              {storedCount} cached AI event classifications stored in local store.
-            </p>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleClearCache}
-          disabled={isClearing || isSyncing}
-          className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3.5 py-2 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 cursor-pointer self-start sm:self-auto"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-          <span>{isClearing ? 'Clearing...' : 'Clear Cache'}</span>
-        </button>
-      </div>
+      <SyncCacheManager
+        storedCount={storedCount}
+        isClearing={isClearing}
+        isSyncing={isSyncing}
+        onClearCache={handleClearCache}
+      />
     </div>
   );
 }
