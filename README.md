@@ -1,68 +1,135 @@
-# AI Time Tracking Dashboard
+# AI Time Tracking & Calendar Intelligence Dashboard
 
-An AI Time Tracking Dashboard built with **Next.js 15**, **TypeScript**, and **Tailwind CSS v4**.
+An enterprise-grade AI Time Tracking Dashboard built with **Next.js 15 (App Router)**, **TypeScript**, and **Tailwind CSS v4**.
 
-## Tech Stack
+This application solves the manual time-tracking burden for customer-facing teams at Smartly.io by transforming messy, real-world Google Calendar data into structured, actionable intelligence—automatically categorizing meetings across a 15-category, attributing time to client accounts, and quantifying team-wide client investments.
 
-- **Framework**: Next.js 15
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS v4
-- **Icons**: Lucide React
-- **Formatting**: Prettier
-- **Linting**: ESLint
+---
 
-## Project Structure
+## Quickstart & Local Setup
 
-```text
-.
-├── public/
-├── src/
-│   ├── app/          # Routes, layouts, and page views
-│   ├── components/   # Reusable UI components (Sidebar, Footer, etc.)
-│   ├── hooks/        # Custom React hooks
-│   ├── lib/          # Integration clients & core logic
-│   ├── styles/       # Global CSS styles (Tailwind v4)
-│   ├── types/        # TypeScript type definitions
-│   └── utils/        # Utility & helper functions
-├── .gitignore
-├── .prettierrc.json
-├── AGENTS.md         # Coding standards and development guidelines
-├── eslint.config.mjs
-├── next.config.ts
-├── package.json
-├── postcss.config.mjs
-├── README.md
-└── tsconfig.json
+### 1. Prerequisites
+- **Node.js**: `v18.18.0` or higher (Node 20+ recommended)
+- **Package Manager**: `npm`
+
+### 2. Environment Variables
+Create a `.env.local` file in the project root:
+
+```env
+NEXT_PUBLIC_AI_PROXY_URL=
+FASTTRACK_AI_PROXY_URL=
+FASTTRACK_API_KEY_RESOURCE=
+FASTTRACK_EMPLOYEES_RESOURCE=
+FASTTRACK_COMPANIES_RESOURCE=
+FASTTRACK_EVENTS_RESOURCE=
 ```
 
-## 🛠️ Getting Started
-
-### Installation
-
-Install dependencies with npm:
-
+### 3. Installation & Run
 ```bash
+# Install dependencies
 npm install
-```
 
-### Development Server
-
-Run the development server locally:
-
-```bash
+# Start development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### Available Scripts
+### 4. Available Scripts
+```bash
+npm run dev      # Run local development server with Turbopack / HMR
+npm run build    # Build production bundle and run static type check
+npm run start    # Start production server
+npm run lint     # Run ESLint validation
+```
 
-- `npm run dev`: Start local development server
-- `npm run build`: Build production application bundle
-- `npm run start`: Start production server
-- `npm run lint`: Run ESLint checks
-- `npm run prettier`: Format codebase with Prettier
+---
 
-## 📖 Development Conventions
+## Folder Structure
 
-Development conventions and AI coding guidelines are documented in [`AGENTS.md`](./AGENTS.md). Components use default exports (`export default`), CSS is centralized in `src/styles/globals.css`, and formatting follows `.prettierrc.json`.
+```text
+ai_time_tracking_dashboard/
+├── src/
+│   ├── app/                      # Next.js App Router (Server components, layouts, API routes)
+│   │   ├── analytics/            # Executive analytics dashboard page
+│   │   ├── calendar/             # Monthly interactive calendar page
+│   │   ├── sync/                 # Synchronization overview, AI pipeline & CSV export page
+│   │   ├── employees/            # Team members directory page
+│   │   ├── companies/            # Client companies directory page
+│   │   ├── api/                  # API endpoints (/api/categorize, /api/events, /api/sync)
+│   │   ├── layout.tsx            # Root dashboard layout with sidebar navigation
+│   │   └── page.tsx              # Homepage overview & quick-access cards
+│   ├── components/               # Modular UI components grouped by feature domain
+│   │   ├── analytics/            # Analytics panels, summary metrics, bar & donut charts
+│   │   ├── calendar/             # Monthly grid, mini navigator, toolbar & day modal
+│   │   ├── events/               # Meeting log table, filters & event inspection modal
+│   │   ├── sync/                 # Sync summary cards, trigger form, logs & cache manager
+│   │   ├── employees/            # Team member directory cards
+│   │   ├── companies/            # Client account directory cards
+│   │   └── Sidebar.tsx           # Global sidebar navigation with route badges
+│   ├── constants/                # Categorization taxonomy, colors & navigation constants
+│   ├── data/                     # Local JSON persistence layer (raw-events, categorized-events, sync-meta)
+│   ├── hooks/                    # Reusable React client hooks (e.g. useEmployeeCalendar)
+│   ├── lib/                      # Business logic, OpenAI prompt engine & atomic file storage
+│   ├── types/                    # Shared TypeScript types & data schemas
+│   ├── utils/                    # Formatting, badge styles, date math & CSV export utilities
+│   └── styles/                   # Tailwind CSS v4 design tokens and global styles
+└── AGENTS.md                     # Development conventions & coding guidelines
+```
+
+---
+
+## AI Prompt & JSON Schema Design
+
+### AI Prompt Architecture (`src/lib/categorize.ts`)
+The prompt instructs the model to act as an operations intelligence specialist for Smartly.io:
+- **Taxonomy Adherence**: Evaluates calendar events against 15 standardized categories across **Client Work** (11 categories), **Internal Work** (3 categories), and **Time Off** (1 category).
+- **Client Attribution**: Matches external attendee email domains (e.g. `@veloura.fi`, `@m-label.com`, `@stryn.ai`) and descriptions against the company's CRM portfolio to resolve client names and IDs.
+- **Categorization Rules**: Defined boundary guidelines separate client-facing calls from internal prep, feed catalog errors from platform bugs, and out-of-scope campaign support from standard delivery.
+
+### JSON Schema (`response_format`)
+The API proxy enforces strict structured outputs (`strict: true`) to eliminate hallucinated category strings and guarantee 100% type safety:
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "category": {
+            "type": "string",
+            "enum": [
+              "Client-facing meetings and comms",
+              "Strategic meetings / QBRs",
+              "Contract / commercial work",
+              "Onboarding and training",
+              "Analysis and insights",
+              "Campaign support (beyond scope)",
+              "Internal client work",
+              "Partner meetings",
+              "Travel & socials",
+              "Troubleshooting (feeds)",
+              "Troubleshooting (Smartly)",
+              "Learning",
+              "Team/company calls",
+              "Other internal tasks",
+              "PTO"
+            ]
+          },
+          "clientName": { "type": ["string", "null"] },
+          "clientId": { "type": ["string", "null"] },
+          "reason": { "type": "string" }
+        },
+        "required": ["id", "category", "clientName", "clientId", "reason"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["items"],
+  "additionalProperties": false
+}
+```
