@@ -5,6 +5,8 @@ import { Tag, Building2, HelpCircle, Sparkles, BarChart3, PieChart } from 'lucid
 import type { ProcessedEvent, Company, EventCategory } from '@/types';
 import { CATEGORY_COLORS, CLIENT_COLORS } from '@/constants';
 import { getCategoryBadgeStyle, getCustomerTierBadgeStyle } from '@/utils';
+import BarChart, { type BarItem } from './BarChart';
+import DonutChart, { type DonutSlice } from './DonutChart';
 
 type TimeBreakdownProps = {
   events: ProcessedEvent[];
@@ -111,8 +113,89 @@ export default function TimeBreakdown({
     };
   }, [events, companies]);
 
-  const donutRadius = 46;
-  const donutCircumference = 2 * Math.PI * donutRadius;
+  const categoryBarItems = useMemo<BarItem[]>(() => {
+    return categoryStats.items.map((item, idx) => {
+      const isUncategorized = item.category === 'Uncategorized';
+      const badgeStyle = getCategoryBadgeStyle(
+        isUncategorized ? null : (item.category as EventCategory),
+      );
+      const color = isUncategorized
+        ? '#F59E0B'
+        : CATEGORY_COLORS[idx % CATEGORY_COLORS.length];
+
+      return {
+        id: item.category,
+        label: item.category,
+        badgeStyle,
+        count: item.count,
+        hours: item.hours,
+        percentage: item.percentage,
+        color,
+      };
+    });
+  }, [categoryStats.items]);
+
+  const categoryDonutItems = useMemo<DonutSlice[]>(() => {
+    return categoryStats.items.map((item, idx) => {
+      const isUncategorized = item.category === 'Uncategorized';
+      const color = isUncategorized
+        ? '#F59E0B'
+        : CATEGORY_COLORS[idx % CATEGORY_COLORS.length];
+
+      return {
+        id: item.category,
+        label: item.category,
+        value: item.hours,
+        percentage: item.percentage,
+        color,
+        count: item.count,
+      };
+    });
+  }, [categoryStats.items]);
+
+  const clientBarItems = useMemo<BarItem[]>(() => {
+    return clientStats.items.map((item, idx) => {
+      const tierBadge = item.company ? `Tier ${item.company.customer_tier}` : undefined;
+      const tierBadgeStyle = item.company
+        ? getCustomerTierBadgeStyle(item.company.customer_tier)
+        : undefined;
+      const color = item.isUncategorized
+        ? '#F59E0B'
+        : item.isInternal
+          ? '#94A3B8'
+          : CLIENT_COLORS[idx % CLIENT_COLORS.length];
+
+      return {
+        id: item.clientName,
+        label: item.clientName,
+        badge: tierBadge,
+        badgeStyle: tierBadgeStyle,
+        count: item.count,
+        hours: item.hours,
+        percentage: item.percentage,
+        color,
+      };
+    });
+  }, [clientStats.items]);
+
+  const clientDonutItems = useMemo<DonutSlice[]>(() => {
+    return clientStats.items.map((item, idx) => {
+      const color = item.isUncategorized
+        ? '#F59E0B'
+        : item.isInternal
+          ? '#94A3B8'
+          : CLIENT_COLORS[idx % CLIENT_COLORS.length];
+
+      return {
+        id: item.clientName,
+        label: item.clientName,
+        value: item.hours,
+        percentage: item.percentage,
+        color,
+        count: item.count,
+      };
+    });
+  }, [clientStats.items]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -182,133 +265,13 @@ export default function TimeBreakdown({
               <span>No categorized events found for this period.</span>
             </div>
           ) : categoryView === 'bar' ? (
-            /* BAR VIEW */
-            <div className="space-y-3.5 max-h-72 overflow-y-auto pr-1">
-              {categoryStats.items.map((item, idx) => {
-                const isUncategorized = item.category === 'Uncategorized';
-                const badgeStyle = getCategoryBadgeStyle(
-                  isUncategorized ? null : (item.category as EventCategory),
-                );
-                const barColor = isUncategorized
-                  ? 'bg-amber-400'
-                  : CATEGORY_COLORS[idx % CATEGORY_COLORS.length];
-
-                return (
-                  <div key={item.category} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2 min-w-0 pr-2">
-                        <span
-                          className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-semibold truncate ${badgeStyle}`}
-                        >
-                          {item.category}
-                        </span>
-                        <span className="text-light text-[11px] shrink-0">
-                          ({item.count} {item.count === 1 ? 'event' : 'events'})
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0 font-mono font-medium">
-                        <span className="text-dark">{item.hours}h</span>
-                        <span className="text-light text-[11px] w-8 text-right">
-                          {item.percentage}%
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-300"
-                        style={{
-                          width: `${Math.max(item.percentage, 3)}%`,
-                          backgroundColor: isUncategorized ? '#F59E0B' : barColor,
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <BarChart items={categoryBarItems} />
           ) : (
-            /* PIE / DONUT VIEW */
-            <div className="flex flex-col sm:flex-row items-center justify-around gap-5 py-2">
-              <div className="relative flex items-center justify-center shrink-0">
-                <svg
-                  className="h-36 w-36 -rotate-90 transform"
-                  viewBox="0 0 120 120"
-                  aria-hidden="true"
-                >
-                  <circle
-                    cx="60"
-                    cy="60"
-                    r={donutRadius}
-                    className="stroke-slate-100"
-                    strokeWidth="14"
-                    fill="none"
-                  />
-                  {(() => {
-                    let accumulated = 0;
-                    return categoryStats.items.map((item, idx) => {
-                      const isUncategorized = item.category === 'Uncategorized';
-                      const strokeColor = isUncategorized
-                        ? '#F59E0B'
-                        : CATEGORY_COLORS[idx % CATEGORY_COLORS.length];
-                      const dash = (item.percentage / 100) * donutCircumference;
-                      const offset = -(accumulated / 100) * donutCircumference;
-                      accumulated += item.percentage;
-
-                      if (dash <= 0) return null;
-
-                      return (
-                        <circle
-                          key={item.category}
-                          cx="60"
-                          cy="60"
-                          r={donutRadius}
-                          stroke={strokeColor}
-                          strokeWidth="14"
-                          strokeDasharray={`${dash} ${donutCircumference}`}
-                          strokeDashoffset={offset}
-                          fill="none"
-                          className="transition-all duration-500"
-                        />
-                      );
-                    });
-                  })()}
-                </svg>
-
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                  <span className="text-lg font-bold text-dark">{categoryStats.totalHours}h</span>
-                  <span className="text-[10px] text-light uppercase tracking-wider">Total</span>
-                </div>
-              </div>
-
-              <div className="space-y-2 max-h-56 overflow-y-auto flex-1 w-full text-xs">
-                {categoryStats.items.map((item, idx) => {
-                  const isUncategorized = item.category === 'Uncategorized';
-                  const color = isUncategorized
-                    ? '#F59E0B'
-                    : CATEGORY_COLORS[idx % CATEGORY_COLORS.length];
-
-                  return (
-                    <div
-                      key={item.category}
-                      className="flex items-center justify-between p-1.5 rounded hover:bg-surface-hover/50 text-[11px]"
-                    >
-                      <div className="flex items-center gap-2 truncate pr-2">
-                        <span
-                          className="h-2.5 w-2.5 rounded-full shrink-0"
-                          style={{ backgroundColor: color }}
-                        />
-                        <span className="text-dark truncate font-medium">{item.category}</span>
-                      </div>
-                      <div className="flex items-center gap-2 font-mono shrink-0">
-                        <span className="text-dark">{item.hours}h</span>
-                        <span className="text-light w-7 text-right">{item.percentage}%</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            <DonutChart
+              items={categoryDonutItems}
+              totalValue={`${categoryStats.totalHours}h`}
+              size="sm"
+            />
           )}
         </div>
       </div>
@@ -389,137 +352,13 @@ export default function TimeBreakdown({
               <span>No client data available.</span>
             </div>
           ) : clientView === 'bar' ? (
-            <div className="space-y-3.5 max-h-72 overflow-y-auto pr-1">
-              {clientStats.items.map((item, idx) => {
-                const tierBadge = item.company
-                  ? getCustomerTierBadgeStyle(item.company.customer_tier)
-                  : '';
-                const barColor = item.isUncategorized
-                  ? '#F59E0B'
-                  : item.isInternal
-                    ? '#94A3B8'
-                    : CLIENT_COLORS[idx % CLIENT_COLORS.length];
-
-                return (
-                  <div key={item.clientName} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2 min-w-0 pr-2">
-                        <span className="font-semibold text-dark truncate">{item.clientName}</span>
-                        {item.company && (
-                          <span
-                            className={`inline-flex items-center rounded border px-1.5 py-0.2 text-[10px] font-semibold shrink-0 ${tierBadge}`}
-                          >
-                            Tier {item.company.customer_tier}
-                          </span>
-                        )}
-                        <span className="text-light text-[11px] shrink-0">
-                          ({item.count} {item.count === 1 ? 'event' : 'events'})
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0 font-mono font-medium">
-                        <span className="text-dark">{item.hours}h</span>
-                        <span className="text-light text-[11px] w-8 text-right">
-                          {item.percentage}%
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-300"
-                        style={{
-                          width: `${Math.max(item.percentage, 3)}%`,
-                          backgroundColor: barColor,
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <BarChart items={clientBarItems} />
           ) : (
-            <div className="flex flex-col sm:flex-row items-center justify-around gap-5 py-2">
-              <div className="relative flex items-center justify-center shrink-0">
-                <svg
-                  className="h-36 w-36 -rotate-90 transform"
-                  viewBox="0 0 120 120"
-                  aria-hidden="true"
-                >
-                  <circle
-                    cx="60"
-                    cy="60"
-                    r={donutRadius}
-                    className="stroke-slate-100"
-                    strokeWidth="14"
-                    fill="none"
-                  />
-                  {(() => {
-                    let accumulated = 0;
-                    return clientStats.items.map((item, idx) => {
-                      const strokeColor = item.isUncategorized
-                        ? '#F59E0B'
-                        : item.isInternal
-                          ? '#94A3B8'
-                          : CLIENT_COLORS[idx % CLIENT_COLORS.length];
-                      const dash = (item.percentage / 100) * donutCircumference;
-                      const offset = -(accumulated / 100) * donutCircumference;
-                      accumulated += item.percentage;
-
-                      if (dash <= 0) return null;
-
-                      return (
-                        <circle
-                          key={item.clientName}
-                          cx="60"
-                          cy="60"
-                          r={donutRadius}
-                          stroke={strokeColor}
-                          strokeWidth="14"
-                          strokeDasharray={`${dash} ${donutCircumference}`}
-                          strokeDashoffset={offset}
-                          fill="none"
-                          className="transition-all duration-500"
-                        />
-                      );
-                    });
-                  })()}
-                </svg>
-
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                  <span className="text-lg font-bold text-dark">{clientStats.totalHours}h</span>
-                  <span className="text-[10px] text-light uppercase tracking-wider">Total</span>
-                </div>
-              </div>
-
-              <div className="space-y-2 max-h-56 overflow-y-auto flex-1 w-full text-xs">
-                {clientStats.items.map((item, idx) => {
-                  const color = item.isUncategorized
-                    ? '#F59E0B'
-                    : item.isInternal
-                      ? '#94A3B8'
-                      : CLIENT_COLORS[idx % CLIENT_COLORS.length];
-
-                  return (
-                    <div
-                      key={item.clientName}
-                      className="flex items-center justify-between p-1.5 rounded hover:bg-surface-hover/50 text-[11px]"
-                    >
-                      <div className="flex items-center gap-2 truncate pr-2">
-                        <span
-                          className="h-2.5 w-2.5 rounded-full shrink-0"
-                          style={{ backgroundColor: color }}
-                        />
-                        <span className="text-dark truncate font-medium">{item.clientName}</span>
-                      </div>
-                      <div className="flex items-center gap-2 font-mono shrink-0">
-                        <span className="text-dark">{item.hours}h</span>
-                        <span className="text-light w-7 text-right">{item.percentage}%</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            <DonutChart
+              items={clientDonutItems}
+              totalValue={`${clientStats.totalHours}h`}
+              size="sm"
+            />
           )}
         </div>
       </div>
